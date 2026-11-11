@@ -2,6 +2,9 @@
 # 本地记忆与工具目录
 .workbuddy/
 
+# macOS 元数据
+.DS_Store
+
 # Python 构建脚本与缓存（产物 data.js / maps 已提交）
 *.py
 __pycache__/
