@@ -44,6 +44,7 @@
   <nav class="mainnav" id="mainnav">
     <button class="nav-btn active" data-view="home">🏠 主页</button>
     <button class="nav-btn" data-view="quiz">⚔️ 闯关答题</button>
+    <button class="nav-btn" data-view="clue">🕵️ 线索推理</button>
     <button class="nav-btn" data-view="drag">🎮 拖拽互动馆</button>
     <button class="nav-btn" data-view="hall">🃏 历史藏馆</button>
     <button class="nav-btn" data-view="theater">🎭 穿越剧场</button>
@@ -52,6 +53,7 @@
   <main class="stage">
     <section class="view" id="view-home"></section>
     <section class="view hidden" id="view-quiz"></section>
+    <section class="view hidden" id="view-clue"></section>
     <section class="view hidden" id="view-drag"></section>
     <section class="view hidden" id="view-hall"></section>
     <section class="view hidden" id="view-theater"></section>
@@ -66,7 +68,7 @@
       <button class="qr-modal-close" id="qrModalClose" aria-label="关闭">×</button>
       <h3>📱 手机继续玩</h3>
       <img src="../qr-public/game-public.svg" alt="扫码在手机上玩" class="qr-modal-img" />
-      <p class="qr-modal-tip">微信扫一扫，在手机上打开「历史游乐园」继续答题闯关。<br>手机端与电脑端进度各自独立保存，方便随时随地游玩。</p>
+      <p class="qr-modal-tip">微信扫一扫，在手机上打开「历史游乐园」继续答题闯关。<br>使用同一个游戏账号登录，手机与电脑的进度、卡牌和线索记录会自动同步。</p>
     </div>
   </div>
 
@@ -76,7 +78,9 @@
   <script src="js/bridge.js"></script>
   <script src="js/quiz.js"></script>
   <script src="js/link-data.js"></script>
+  <script src="js/clue-data.js"></script>
   <script src="js/drag.js"></script>
+  <script src="js/clue.js"></script>
   <script src="js/hall.js"></script>
   <script src="js/theater-data.js"></script>
   <script src="js/theater-data-extra.js"></script>

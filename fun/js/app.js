@@ -44,13 +44,14 @@
       return false;
     },
     go: function (view) {
-      ["home", "quiz", "drag", "hall", "theater"].forEach(function (v) {
+      ["home", "quiz", "clue", "drag", "hall", "theater"].forEach(function (v) {
         el("view-" + v).classList.toggle("hidden", v !== view);
       });
       el("mainnav").querySelectorAll(".nav-btn").forEach(function (b) {
         b.classList.toggle("active", b.getAttribute("data-view") === view);
       });
       if (view === "quiz") FunQuiz.open();
+      else if (view === "clue") FunClue.open();
       else if (view === "drag") FunDrag.open();
       else if (view === "hall") FunHall.open();
       else if (view === "theater") FunTheater.open();
@@ -85,10 +86,14 @@
         '<div class="mc-ico">⚔️</div><h3>闯关答题</h3>' +
         '<span class="mc-tag">积分 · 连击 · Boss</span>' +
         '<p>系统从全部朝代随机抽题，生命值、连击加分、限时挑战，通关赢经验、徽章和人物卡牌。</p></div>' +
+      '<div class="module-card mc-6" data-action="clue">' +
+        '<div class="mc-ico">🕵️</div><h3>线索推理</h3>' +
+        '<span class="mc-tag">猜人物 · 三条线索</span>' +
+        '<p>三条线索由难到易依次给出，输入人物名字来猜。用 1 / 2 / 3 条线索答对，可得 3 / 2 / 1 张卡牌。</p></div>' +
       '<div class="module-card mc-2" data-action="drag">' +
         '<div class="mc-ico">🎮</div><h3>拖拽互动馆</h3>' +
-        '<span class="mc-tag">排序 · 连连看 · 拼图</span>' +
-        '<p>把事件排回时间线、把朝代和都城连起来、把历史地图拼回去，动手又动脑。</p></div>' +
+        '<span class="mc-tag">排序 · 连连看</span>' +
+        '<p>把事件排回时间线、把人物与典故和朝代连起来，动手又动脑。</p></div>' +
       '<div class="module-card mc-3" data-action="hall">' +
         '<div class="mc-ico">🃏</div><h3>历史藏馆</h3>' +
         '<span class="mc-tag">卡牌收集</span>' +
@@ -112,7 +117,7 @@
       '<div class="module-grid">' + modules + "</div>" +
       '<div class="home-tip">' +
         "💡 <b>小提示：</b>每玩一个模块都会获得经验和卡牌，连续每天来打卡还能解锁「持之以恒」徽章。" +
-        "四种玩法共享同一套成长数据，越玩越上头！" +
+        "各玩法共享同一套成长数据，越玩越上头！" +
       "</div>" +
       review;
 

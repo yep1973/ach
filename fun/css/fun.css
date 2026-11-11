@@ -201,7 +201,9 @@ h1, h2, h3 { font-family: var(--kai); letter-spacing: .5px; }
 .mc-3 .mc-ico { background: #fff0d6; }
 .mc-4 .mc-ico { background: #ffe1ec; }
 .mc-5 .mc-ico { background: #ece4ff; }
+.mc-6 .mc-ico { background: #e4eef8; }
 .mc-5:hover { border-color: #d9c9ff; }
+.mc-6:hover { border-color: #c6dcf2; }
 .module-card h3 { font-size: 19px; }
 .module-card p { font-size: 13px; color: var(--ink-soft); line-height: 1.5; }
 .mc-tag {
@@ -427,29 +429,72 @@ h1, h2, h3 { font-family: var(--kai); letter-spacing: .5px; }
   60% { transform: translateX(6px); background: #ffece6; border-color: var(--coral); }
 }
 
-/* 地图拼图 */
-.pz-wrap { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
-.pz-board {
-  width: 360px; height: 360px;
-  display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
-  gap: 0; background: #f0e3d2; border-radius: 16px; padding: 0;
-}
-.pz-slot {
-  background: #fff; border-radius: 0; overflow: hidden; position: relative;
-}
-.pz-slot.over { outline: 3px dashed var(--teal); outline-offset: -3px; }
-.pz-slot.placed { outline: 3px solid var(--green); outline-offset: -3px; }
-.pz-progress { font-weight: 700; color: var(--teal); margin-bottom: 10px; font-size: 15px; }
-.pz-tile {
-  width: 100%; height: 100%;
-  background-size: 360px 360px;
-  background-repeat: no-repeat;
-  cursor: grab; border-radius: 10px;
-}
-.pz-tile.dragging { opacity: .4; }
-.pz-side { flex: 1; min-width: 240px; }
-.pz-side h4 { margin-bottom: 8px; }
+/* 目标图提示文字（最终拼图与线索推理共用） */
 .pz-hint { font-size: 13px; color: var(--ink-soft); line-height: 1.6; margin-bottom: 12px; }
+
+/* ---------- 线索推理（猜人物） ---------- */
+.clue-panel { max-width: 880px; margin: 0 auto; }
+.clue-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 10px; flex-wrap: wrap; margin-bottom: 12px;
+}
+.clue-round {
+  font-size: 13px; color: var(--ink-soft);
+  background: #fff3e6; padding: 7px 13px; border-radius: 99px;
+}
+.clue-reward {
+  font-size: 14px; font-weight: 700; color: var(--coral-d);
+  background: #fff0e9; padding: 8px 14px; border-radius: 12px;
+}
+.clue-reward b { font-size: 17px; }
+.clue-ladder { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.clue-step {
+  font-size: 12px; padding: 5px 11px; border-radius: 99px;
+  background: #f3ecdb; color: var(--ink-soft); border: 2px solid transparent;
+}
+.clue-step.on {
+  background: var(--coral); color: #fff;
+  border-color: var(--coral-d); font-weight: 700;
+}
+.clue-list { display: grid; gap: 12px; }
+.clue-item {
+  border-radius: 16px; padding: 14px 16px;
+  border-left: 6px solid var(--peach);
+  background: var(--card); box-shadow: var(--shadow);
+}
+.clue-item.lv-3 { border-left-color: var(--purple); background: #f8f3fb; }
+.clue-item.lv-2 { border-left-color: var(--blue); background: #f1f6fb; }
+.clue-item.lv-1 { border-left-color: var(--jade); background: #f0f8f3; }
+.clue-item.locked {
+  opacity: .62; border-left-color: #d8cbb2;
+  background: #f6f1e5; border-left-style: dashed;
+}
+.clue-item-head {
+  display: flex; justify-content: space-between; gap: 10px;
+  font-size: 12px; font-weight: 800; color: var(--ink-soft); margin-bottom: 8px;
+}
+.clue-lv { color: var(--coral-d); }
+.clue-text {
+  font-family: var(--kai); font-size: 17px; line-height: 1.75;
+  color: var(--ink); word-break: break-word;
+}
+.clue-item.locked .clue-text { font-size: 14px; color: var(--ink-soft); }
+.clue-input-row { display: flex; gap: 10px; margin-top: 18px; }
+.clue-input {
+  flex: 1; min-width: 0; box-sizing: border-box;
+  padding: 13px 16px; font-size: 16px; font-family: var(--serif);
+  border: 2px solid var(--peach); border-radius: 14px;
+  background: #fff; color: var(--ink); outline: none;
+}
+.clue-input:focus { border-color: var(--coral); box-shadow: 0 0 0 3px rgba(158,43,37,.12); }
+.clue-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+.clue-actions .btn { font-size: 14px; padding: 10px 16px; }
+.clue-notice {
+  margin-top: 12px; padding: 10px 14px; border-radius: 12px;
+  background: #fff5ea; color: var(--ink-soft); font-size: 14px;
+}
+.clue-result { font-size: 15px; }
+.clue-know { margin-top: 8px; font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
 
 /* ---------- 历史藏馆 ---------- */
 .hall-grid {
@@ -594,9 +639,10 @@ h1, h2, h3 { font-family: var(--kai); letter-spacing: .5px; }
   .lk-cols { gap: 10px; }
   .lk-card { font-size: 13px; padding: 10px 7px; min-height: 58px; }
   .lt-btn { padding: 6px 11px; font-size: 12px; }
-  .pz-board { width: 300px; height: 300px; }
-  .pz-tile { background-size: 300px 300px; }
   .hud { width: 100%; justify-content: space-between; }
+  .clue-input-row { flex-direction: column; }
+  .clue-actions .btn { flex: 1 1 auto; }
+  .clue-text { font-size: 15px; }
 }
 
 /* ============ 终极目标流程（campaign） ============ */

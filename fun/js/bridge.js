@@ -151,14 +151,9 @@
     return out;
   }
 
-  // 该朝代是否有地图
+  // 该朝代是否有地图（穿越剧场场景图复用）
   function mapOf(id) {
     return mapSet[id] ? "maps/" + id + ".svg" : null;
-  }
-
-  // 可用于拼图的朝代（有地图的）
-  function puzzleDynasties() {
-    return dynasties.filter(function (d) { return mapSet[d.id]; });
   }
 
   window.FunData = {
@@ -168,7 +163,6 @@
     quizOf: quizOf,
     allNotables: allNotables,
     mapOf: mapOf,
-    puzzleDynasties: puzzleDynasties,
     dynastyById: dynastyById
   };
 })();

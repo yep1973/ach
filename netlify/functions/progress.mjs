@@ -86,6 +86,25 @@ function mergeGrades(a, b) {
   return out;
 }
 
+// 线索推理：已出过的提示 id 取并集（每台设备出题后就上传，避免重复）
+function mergeClueUsed(a, b) {
+  const out = [], seen = {};
+  arr(a).concat(arr(b)).forEach(function (x) {
+    const id = str(x, 80);
+    if (id && !seen[id]) { seen[id] = 1; out.push(id); }
+  });
+  return out.slice(0, 2000);
+}
+
+function mergeClueStats(a, b) {
+  const x = obj(a), y = obj(b);
+  return {
+    asked: Math.max(num(x.asked), num(y.asked)),
+    solved: Math.max(num(x.solved), num(y.solved)),
+    firstTry: Math.max(num(x.firstTry), num(y.firstTry))
+  };
+}
+
 // 只保留业务字段，丢弃运行期状态（playing / lastTick / lastActive / _clock 等）
 function sanitize(account, raw) {
   const src = obj(raw);
@@ -101,10 +120,12 @@ function sanitize(account, raw) {
     reviews: mergeReviews(src.reviews, []),
     theaterBest: obj(src.theaterBest),
     cards: mergeCards(src.cards, []),
-    modCards: { quiz: num(mod.quiz), drag: num(mod.drag), theater: num(mod.theater) },
+    modCards: { quiz: num(mod.quiz), drag: num(mod.drag), theater: num(mod.theater), clue: num(mod.clue) },
     fragments: num(src.fragments),
     fragShown: num(src.fragShown),
     introSeen: !!src.introSeen,
+    clueUsed: mergeClueUsed(src.clueUsed, []),
+    clueStats: mergeClueStats(src.clueStats, {}),
     playedMs: num(src.playedMs),
     completed: !!src.completed,
     completedMs: src.completedMs == null ? null : num(src.completedMs),
@@ -135,12 +156,15 @@ function merge(old, inc) {
   out.theaterBest = mergeGrades(old.theaterBest, inc.theaterBest);
   out.reviews = mergeReviews(old.reviews, inc.reviews);
   out.cards = mergeCards(old.cards, inc.cards);
+  out.clueUsed = mergeClueUsed(old.clueUsed, inc.clueUsed);
+  out.clueStats = mergeClueStats(old.clueStats, inc.clueStats);
 
   const om = obj(old.modCards), im = obj(inc.modCards);
   out.modCards = {
     quiz: Math.max(num(om.quiz), num(im.quiz)),
     drag: Math.max(num(om.drag), num(im.drag)),
-    theater: Math.max(num(om.theater), num(im.theater))
+    theater: Math.max(num(om.theater), num(im.theater)),
+    clue: Math.max(num(om.clue), num(im.clue))
   };
 
   const dayOld = str(old.lastDay, 20), dayInc = str(inc.lastDay, 20);

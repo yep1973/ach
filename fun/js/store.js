@@ -26,7 +26,7 @@
     perfect:   { name: "百发百中", desc: "一次闯关全对",   icon: "🎯" },
     timeline:  { name: "时间大师", desc: "时间轴排序满分", icon: "⏳" },
     matcher:   { name: "配对高手", desc: "连连看零失误",   icon: "🔗" },
-    puzzle:    { name: "拼图达人", desc: "复原一张历史地图", icon: "🗺️" },
+    deduce:    { name: "推理达人", desc: "线索推理仅用一条提示就猜中", icon: "🕵️" },
     collector: { name: "收藏家",   desc: "集齐 10 位人物卡", icon: "🃏" },
     streak3:   { name: "持之以恒", desc: "连续打卡 3 天",   icon: "🔥" },
     theater:   { name: "剧情大师", desc: "完成一次穿越剧场", icon: "🎭" },
@@ -73,6 +73,7 @@
       theaterBest: p.theaterBest || {}, cards: p.cards || [],
       modCards: p.modCards || {}, fragments: p.fragments,
       fragShown: p.fragShown, introSeen: p.introSeen,
+      clueUsed: p.clueUsed || [], clueStats: p.clueStats || {},
       playedMs: p.playedMs, completed: p.completed, completedMs: p.completedMs
     };
   }
@@ -109,6 +110,22 @@
     return out.slice(0, 500);
   }
   function maxN(a, b) { return Math.max(Number(a) || 0, Number(b) || 0); }
+  // 线索推理「已用过的提示」：两端取并集，保证手机 / 电脑同账号不会重复出题
+  function unionClues(a, b) {
+    var out = [], seen = {};
+    (a || []).concat(b || []).forEach(function (id) {
+      if (typeof id === "string" && id && !seen[id]) { seen[id] = 1; out.push(id); }
+    });
+    return out.slice(0, 2000);
+  }
+  function unionClueStats(a, b) {
+    a = a || {}; b = b || {};
+    return {
+      asked: maxN(a.asked, b.asked),
+      solved: maxN(a.solved, b.solved),
+      firstTry: maxN(a.firstTry, b.firstTry)
+    };
+  }
   function minMs2(a, b) {
     if (a == null) return b;
     if (b == null) return a;
@@ -140,9 +157,12 @@
       p.theaterBest = Object.assign({}, p.theaterBest || {}, local.theaterBest || {});
       p.reviews = ((local.reviews || []).length > (p.reviews || []).length) ? local.reviews : p.reviews;
       p.cards = mergeCardArrays(p.cards, local.cards);
+      p.clueUsed = unionClues(p.clueUsed, local.clueUsed);
+      p.clueStats = unionClueStats(p.clueStats, local.clueStats);
       var lm = local.modCards || {}, rm = p.modCards || {};
       p.modCards = {
-        quiz: maxN(lm.quiz, rm.quiz), drag: maxN(lm.drag, rm.drag), theater: maxN(lm.theater, rm.theater)
+        quiz: maxN(lm.quiz, rm.quiz), drag: maxN(lm.drag, rm.drag),
+        theater: maxN(lm.theater, rm.theater), clue: maxN(lm.clue, rm.clue)
       };
       p.playing = !!local.playing;
     }
@@ -227,10 +247,12 @@
       reviews: [],
       theaterBest: {},              // scenarioId -> grade
       cards: [],                    // 每张掉落卡 {id,name,role,dynasty,source,ts}（可重复）
-      modCards: { quiz: 0, drag: 0, theater: 0 }, // 各模块已产卡数（受上限约束）
+      modCards: { quiz: 0, drag: 0, theater: 0, clue: 0 }, // 各模块已产卡数（受上限约束）
       fragments: 0,                 // 0..20
       fragShown: 0,                 // 已展示过阶段提醒的碎片数
       introSeen: false,             // 是否看过游戏目标
+      clueUsed: [],                 // 线索推理：本轮已出过的提示 id（跨设备同步）
+      clueStats: { asked: 0, solved: 0, firstTry: 0 }, // 出题 / 猜中 / 一击即中次数
       playedMs: 0,                  // 累计游戏时长
       lastTick: 0,                  // 计时心跳戳
       playing: false,               // 是否处于“游戏中”（在玩法界面则计Tick）
@@ -248,10 +270,15 @@
     var d = defaultProfile(p.account || "__guest__", p.nick || "__guest__");
     for (var k in d) { if (!(k in p)) p[k] = d[k]; }
     if (!p.modCards || typeof p.modCards !== "object") p.modCards = {};
-    ["quiz", "drag", "theater"].forEach(function (m) {
+    ["quiz", "drag", "theater", "clue"].forEach(function (m) {
       if (typeof p.modCards[m] !== "number" || p.modCards[m] < 0) p.modCards[m] = 0;
     });
     if (!Array.isArray(p.cards)) p.cards = [];
+    if (!Array.isArray(p.clueUsed)) p.clueUsed = [];
+    if (!p.clueStats || typeof p.clueStats !== "object") p.clueStats = { asked: 0, solved: 0, firstTry: 0 };
+    ["asked", "solved", "firstTry"].forEach(function (k) {
+      if (typeof p.clueStats[k] !== "number" || p.clueStats[k] < 0) p.clueStats[k] = 0;
+    });
     if (!p.badges || typeof p.badges !== "object") p.badges = {};
     if (!p.theaterBest || typeof p.theaterBest !== "object") p.theaterBest = {};
     if (!Array.isArray(p.reviews)) p.reviews = [];

@@ -1,6 +1,6 @@
 /* ============================================================
    趣味历史乐园 · 拖拽互动馆
-   1) 时间轴排序  2) 连连看（4 种题型·不重复出题）  3) 地图拼图（SVG 九宫格）
+   1) 时间轴排序  2) 连连看（4 种题型·不重复出题）
    统一交互：清晰规则 + 提交/检查按钮 + 即时对错反馈 + 换下一张。
    ============================================================ */
 (function () {
@@ -16,7 +16,7 @@
     return a;
   }
 
-  var SUB = "sort"; // sort | link | puzzle
+  var SUB = "sort"; // sort | link
 
   /* ---- 连连看：题型选择 + 去重出题状态 ---- */
   var LINK_TYPE = "mix";                  // mix | capital | figure | deed | event
@@ -80,11 +80,10 @@
       '<div class="back-link" data-go="home">← 返回主页</div>' +
       '<div class="panel">' +
         '<div class="section-title">🎮 拖拽互动馆</div>' +
-        '<div class="section-sub">动手又动脑：把事件排回时间线、把朝代和都城连起来、把历史地图拼回去！每个游戏都有规则说明，做完会立刻告诉你对错。</div>' +
+        '<div class="section-sub">动手又动脑：把事件排回时间线，把人物、典故与朝代连起来！每个游戏都有规则说明，做完会立刻告诉你对错。</div>' +
         '<div class="subtabs">' +
           '<button class="subtab active" data-sub="sort">⏳ 时间轴排序</button>' +
           '<button class="subtab" data-sub="link">🔗 连连看</button>' +
-          '<button class="subtab" data-sub="puzzle">🗺️ 地图拼图</button>' +
         "</div>" +
         '<div id="dragBody"></div>' +
       "</div>";
@@ -102,8 +101,7 @@
 
   function renderBody() {
     if (SUB === "sort") renderSort();
-    else if (SUB === "link") renderLink();
-    else renderPuzzle();
+    else renderLink();
   }
 
   /* ---------------- 时间轴排序 ---------------- */
@@ -331,131 +329,6 @@
       el("linkNext").onclick = playLink;
       FunUI.refreshHUD();
     }
-  }
-
-  /* ---------------- 地图拼图 ---------------- */
-  function renderPuzzle() {
-    var body = el("dragBody");
-    var ds = FunData.puzzleDynasties();
-    body.innerHTML =
-      '<div class="tl-intro">🗺️ <b>玩法：</b>系统会随机抽取一个朝代的历史地图，把它<b>拖回原位</b>，拼出和右图（目标图）一样的完整疆域图。点「检查拼图」可随时查看进度，全部就位即过关。点「再拼一张」可随机抽取下一关。</div>' +
-      '<div id="pzStage"></div>';
-    if (!ds.length) { el("pzStage").innerHTML = "<p>暂无地图，稍后再来～</p>"; return; }
-    var pick = ds[Math.floor(Math.random() * ds.length)];
-    playPuzzle(pick.id);
-  }
-
-  function playPuzzle(id) {
-    var d = FunData.dynastyById(id);
-    var src = FunData.mapOf(id);
-    var stage = el("pzStage");
-    var N = 3, cell = 120, size = N * cell;
-    var arr = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]); // arr[slot] = 该格应放的碎片号
-    var dragSlot = null, done = false, board = null;
-
-    function tileBg(pos) {
-      var r = Math.floor(pos / N), c = pos % N;
-      return "url(../maps/" + id + ".svg) " + (-c * cell) + "px " + (-r * cell) + "px / " + size + "px " + size + "px no-repeat";
-    }
-    function correctCount() {
-      var n = 0;
-      for (var s = 0; s < N * N; s++) if (arr[s] === s) n++;
-      return n;
-    }
-    function allCorrect() { return correctCount() === N * N; }
-
-    function buildStage() {
-      stage.innerHTML =
-        '<div class="pz-dyn-label">📍 复原地图：<b>' + d.name + '</b></div>' +
-        '<div class="pz-wrap">' +
-          '<div class="pz-board" id="pzBoard"></div>' +
-          '<div class="pz-side">' +
-            "<h4>🎯 目标图（参考）</h4>" +
-            '<img src="' + src + '" width="200" style="border-radius:12px;box-shadow:var(--shadow);background:#fff"/>' +
-            '<p class="pz-hint">把左边九宫格的碎片拖到正确位置，拼出和右图一样的地图即可通关。</p>' +
-            '<div class="pz-progress" id="pzProg"></div>' +
-            '<div id="pzMsg"></div>' +
-            '<div class="quiz-actions">' +
-              '<button class="btn" id="pzCheck">检查拼图</button>' +
-              '<button class="btn ghost" id="pzShuffle">打乱重来</button>' +
-            "</div>" +
-          "</div>" +
-        "</div>";
-      board = stage.querySelector("#pzBoard");
-      el("pzCheck").onclick = function () {
-        if (done) return;
-        if (allCorrect()) { winPuzzle(); }
-        else {
-          el("pzMsg").innerHTML = '<div class="feedback no">还差 ' + (N * N - correctCount()) +
-            " 块没拼对，继续加油！（绿框=已就位）</div>";
-        }
-      };
-      el("pzShuffle").onclick = function () {
-        if (done) return;
-        arr = shuffle([0, 1, 2, 3, 4, 5, 6, 7, 8]);
-        el("pzMsg").innerHTML = "";
-        draw(); updateProgress();
-      };
-    }
-
-    function draw() {
-      board.innerHTML = "";
-      for (let s = 0; s < N * N; s++) {
-        var slot = document.createElement("div");
-        slot.className = "pz-slot";
-        slot.setAttribute("data-s", s);
-        var tp = arr[s];
-        if (tp !== null) {
-          var tile = document.createElement("div");
-          tile.className = "pz-tile";
-          tile.style.background = tileBg(tp);
-          tile.draggable = true;
-          tile.ondragstart = function (ev) {
-            dragSlot = s; tile.classList.add("dragging");
-            ev.dataTransfer.effectAllowed = "move";
-            ev.dataTransfer.setData("text/plain", String(s));
-          };
-          tile.ondragend = function () { tile.classList.remove("dragging"); };
-          slot.appendChild(tile);
-        }
-        slot.ondragover = function (ev) { ev.preventDefault(); slot.classList.add("over"); };
-        slot.ondragleave = function () { slot.classList.remove("over"); };
-        slot.ondrop = function (ev) {
-          ev.preventDefault(); slot.classList.remove("over");
-          if (dragSlot === null || dragSlot === s || done) return;
-          var t = arr[dragSlot]; arr[dragSlot] = arr[s]; arr[s] = t;
-          dragSlot = null;
-          draw(); updateProgress();
-        };
-        if (arr[s] === s) slot.classList.add("placed");
-        board.appendChild(slot);
-      }
-    }
-
-    function updateProgress() {
-      var c = correctCount();
-      el("pzProg").textContent = "已就位 " + c + " / " + (N * N);
-      if (c === N * N && !done) winPuzzle();
-    }
-
-    function winPuzzle() {
-      done = true;
-      FunStore.addXp(30);
-      FunUI.award("puzzle");
-      var res = (window.FunCampaign ? FunCampaign.award("drag", FunCampaign.CONFIG.DRAG_GAME_CARDS.puzzle, id) : { awarded: 0, cards: [] });
-      var cardNames = res.cards.map(function (c) { return c.name; }).join("、");
-      el("pzMsg").innerHTML =
-        '<div class="feedback ok"><b>地图复原成功 🗺️</b> +30 经验' +
-        (cardNames ? " · 获得卡牌 " + cardNames : " · 该玩法卡牌已达上限") +
-        '<div class="quiz-actions"><button class="btn" id="pzNext">再拼一张 →</button></div></div>';
-      FunUI.refreshHUD();
-      var nx = el("pzNext");
-      if (nx) nx.onclick = renderPuzzle;
-    }
-
-    buildStage();
-    draw();
-    updateProgress();
   }
 
   window.FunDrag = { open: open };

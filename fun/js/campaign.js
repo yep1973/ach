@@ -15,13 +15,14 @@
 
   /* ---------------- 规则配置（卡牌分配） ----------------
      总目标 = 20 碎片 × 10 卡 = 200 卡。
-     三模块上限之和 = 90+60+50 = 200，逼玩家玩遍三种玩法。 */
+     每个玩法各有产卡上限，全局 200 卡封顶，鼓励玩家把玩法都体验一遍。 */
   var CONFIG = {
     FRAGMENTS_TOTAL: 20,
     CARDS_PER_FRAGMENT: 10,
-    MODULE_CAPS: { quiz: 90, drag: 60, theater: 50 },
+    MODULE_CAPS: { quiz: 90, drag: 60, theater: 50, clue: 50 },
     QUIZ_CARDS_PER_CORRECT: 1,   // 答题：每答对 1 题得 1 张卡牌（不论题型，同一题只给一张）
-    DRAG_GAME_CARDS: { sort: 4, link: 4, puzzle: 4 },
+    DRAG_GAME_CARDS: { sort: 4, link: 4 },
+    CLUE_REWARDS: { 1: 3, 2: 2, 3: 1 },  // 线索推理：用了几条提示答对 → 得几张卡
     THEATER_GRADE_CARDS: { S: 5, A: 4, B: 3, C: 2 }
   };
 
@@ -149,10 +150,11 @@
         '<p class="obj-lead">通过答题与互动收集 <b>200 张</b>历史人物卡牌，每 <b>10 张</b>自动合成 1 片<b>中国地图碎片</b>，集齐 <b>20 片</b>后拼出完整中国地图，即完成终极目标！</p>' +
         '<div class="obj-how">' +
           '<div class="obj-row"><span class="obj-ico">⚔️</span><div><b>闯关答题</b>（最多 '+dist.MODULE_CAPS.quiz+' 张）<br><span class="obj-dim">每答对一题获得 1 张人物卡牌（不限题型）</span></div></div>' +
-          '<div class="obj-row"><span class="obj-ico">🎮</span><div><b>拖拽互动馆</b>（最多 '+dist.MODULE_CAPS.drag+' 张）<br><span class="obj-dim">时间轴排序 / 连连看 / 地图拼图，每通关 1 次 4 张</span></div></div>' +
+          '<div class="obj-row"><span class="obj-ico">🕵️</span><div><b>线索推理</b>（最多 '+dist.MODULE_CAPS.clue+' 张）<br><span class="obj-dim">三条线索由难到易依次给出；1 / 2 / 3 条猜中得 3 / 2 / 1 张</span></div></div>' +
+          '<div class="obj-row"><span class="obj-ico">🎮</span><div><b>拖拽互动馆</b>（最多 '+dist.MODULE_CAPS.drag+' 张）<br><span class="obj-dim">时间轴排序 / 连连看，每通关 1 次 4 张</span></div></div>' +
           '<div class="obj-row"><span class="obj-ico">🎭</span><div><b>穿越剧场</b>（最多 '+dist.MODULE_CAPS.theater+' 张）<br><span class="obj-dim">按结局评级：S 5 / A 4 / B 3 / C 2 张</span></div></div>' +
         "</div>" +
-        '<p class="obj-tip">💡 三种玩法都设有上限，只刷一种无法集齐——要通关必须都来体验！</p>' +
+        '<p class="obj-tip">💡 每种玩法都设有产卡上限，只刷一种无法快速集齐——多试几种，越玩越上头！</p>' +
         '<button id="objStart" class="btn login-btn">开始游戏 ▶</button>' +
       "</div>";
     layer.classList.remove("hidden");
@@ -203,7 +205,7 @@
   }
 
   /* ================= 发卡 + 阶段提醒 ================= */
-  // 供三个玩法模块调用
+  // 供各玩法模块调用（答题 / 线索推理 / 拖拽 / 剧场）
   function award(module, count, dynId, opts) {
     var res = FunStore.awardCards(module, count, dynId, opts);
     if (res.fragGained > 0) {
@@ -496,7 +498,7 @@
   function setView(view) {
     var p = FunStore.get();
     if (!p) return;
-    var playing = (view === "home" || view === "quiz" || view === "drag" || view === "hall" || view === "theater");
+    var playing = (view === "home" || view === "quiz" || view === "clue" || view === "drag" || view === "hall" || view === "theater");
     FunStore.markPlaying(playing && !p.completed);
   }
 
