@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>趣味历史乐园 · 管理后台</title>
+<style>
+  :root{
+    --cream:#fff7ef; --peach:#ffe3d3; --ink:#4a3526; --ink-soft:#8a7160;
+    --coral:#ff7a59; --coral-d:#e8533a; --teal:#3fb6a8; --shadow:0 8px 24px rgba(180,120,90,.18);
+    --radius:18px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:linear-gradient(160deg,#fff4e6,#ffe3d3 60%,#ffd0c2);min-height:100vh;color:var(--ink);padding:24px;}
+  .wrap{max-width:680px;margin:0 auto;}
+  h1{font-size:24px;margin:0 0 6px;}
+  .sub{color:var(--ink-soft);margin:0 0 18px;font-size:14px;}
+  .card{background:#fff;border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:16px;}
+  .card h2{font-size:17px;margin:0 0 12px;}
+  .row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed #eee;}
+  .row:last-child{border-bottom:none;}
+  .info{flex:1;}
+  .nm{font-weight:800;font-size:15px;}
+  .meta{color:var(--ink-soft);font-size:12.5px;margin-top:2px;}
+  .btn{border:none;border-radius:12px;padding:9px 14px;font-weight:800;cursor:pointer;font-size:14px;}
+  .btn.danger{background:var(--coral);color:#fff;}
+  .btn.ghost{background:#fff;color:var(--coral-d);border:2px solid #ffd9b8;}
+  .btn.big{width:100%;padding:13px;font-size:16px;}
+  .hint{font-size:13px;color:var(--ink-soft);line-height:1.7;}
+  code{background:#fff6ee;padding:2px 6px;border-radius:6px;color:var(--coral-d);}
+  .toast{position:fixed;left:50%;top:24px;transform:translateX(-50%);background:var(--teal);color:#fff;padding:12px 20px;border-radius:14px;font-weight:800;box-shadow:var(--shadow);opacity:0;transition:.3s;pointer-events:none;}
+  .toast.show{opacity:1;top:32px;}
+  .empty{color:var(--ink-soft);text-align:center;padding:20px 0;font-size:14px;}
+
+  /* 登录门 */
+  .login-layer{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:linear-gradient(160deg,#fff4e6,#ffd0c2);padding:20px;}
+  .login-card{background:#fff;border-radius:24px;padding:28px 26px;width:min(380px,94vw);box-shadow:0 18px 50px rgba(180,110,80,.28);text-align:center;border:3px solid #ffd9b8;}
+  .login-card h2{margin:0 0 4px;}
+  .login-sub{color:var(--ink-soft);font-size:13px;margin:0 0 16px;}
+  .login-label{display:block;text-align:left;font-weight:700;font-size:14px;margin:10px 0 6px;}
+  .login-input{width:100%;box-sizing:border-box;padding:12px 14px;font-size:16px;border:2px solid #ffd9b8;border-radius:12px;outline:none;}
+  .login-input:focus{border-color:var(--coral);}
+  .login-err{color:#e74c3c;font-size:13px;min-height:18px;margin-top:6px;text-align:left;}
+  .deny{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#fff4e6,#ffd0c2);text-align:center;padding:30px;}
+  .deny .big{font-size:56px;}
+  .deny h2{margin:10px 0;}
+  .deny small{color:var(--ink-soft);}
+</style>
+</head>
+<body>
+
+<!-- 仅本机访问拒绝页 -->
+<div id="deny" class="deny" style="display:none">
+  <div class="big">🚫</div>
+  <h2>管理后台仅限本机访问</h2>
+  <small>请在本地浏览器打开：<code>http://localhost:8123/fun/cleardata.html</code><br>（不要通过局域网 IP 或公网地址访问）</small>
+</div>
+
+<!-- 登录门 -->
+<div id="loginLayer" class="login-layer">
+  <div class="login-card">
+    <h2>🔐 管理后台登录</h2>
+    <p class="login-sub">仅限本机管理员登录与维护</p>
+    <label class="login-label">账号</label>
+    <input class="login-input" id="adminUser" type="text" placeholder="请输入账号" autocomplete="username" />
+    <label class="login-label">密码</label>
+    <input class="login-input" id="adminPass" type="password" placeholder="请输入密码" autocomplete="current-password" />
+    <div class="login-err" id="loginErr"></div>
+    <button class="btn big danger" id="adminLogin" style="margin-top:8px;">登 录</button>
+  </div>
+</div>
+
+<!-- 管理界面 -->
+<div class="wrap" id="app" style="display:none">
+  <h1>🧹 趣味历史乐园 · 存档管理</h1>
+  <p class="sub">管理的是浏览器本地（<code>localStorage</code>）保存的昵称存档。删除后该昵称进度即被清除。</p>
+
+  <div class="card">
+    <h2>⚡ 一键清空</h2>
+    <button class="btn big danger" id="delYep">清空昵称「yep」的测试历史数据</button>
+    <p class="hint" style="margin-top:10px;">如需清空其他昵称或全部，见下方列表。</p>
+  </div>
+
+  <div class="card">
+    <h2>👥 全部昵称存档</h2>
+    <div id="list"></div>
+  </div>
+
+  <div class="card">
+    <h2>🗑️ 危险操作</h2>
+    <button class="btn ghost" id="delAll">清空浏览器内全部昵称存档</button>
+    <p class="hint" style="margin-top:10px;">「清空全部」会删除所有昵称，无法恢复，请谨慎。</p>
+  </div>
+  <button class="btn ghost" id="adminLogout" style="margin:0 auto 30px;display:block;">退出登录</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/store.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // —— 来源限制：仅允许本机（localhost / 127.0.0.1）访问，拒绝通过 IP/公网进入 ——
+  var host = location.hostname;
+  var isLocal = (host === "localhost" || host === "127.0.0.1" || host === "[::1]");
+  if (!isLocal) {
+    document.getElementById("loginLayer").style.display = "none";
+    document.getElementById("app").style.display = "none";
+    document.getElementById("deny").style.display = "flex";
+    return;
+  }
+
+  // —— 登录校验：账号/密码哈希比对（密码不以明文存于源码）——
+  function hashStr(s) { var h = 5381; for (var i = 0; i < s.length; i++) { h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; } return h; }
+  var ADMIN_USER = "yep";
+  var ADMIN_PASS_HASH = hashStr("19890721");
+
+  function tryLogin() {
+    var u = document.getElementById("adminUser").value.trim();
+    var p = document.getElementById("adminPass").value;
+    var err = document.getElementById("loginErr");
+    if (u === ADMIN_USER && hashStr(p) === ADMIN_PASS_HASH) {
+      document.getElementById("loginLayer").style.display = "none";
+      document.getElementById("app").style.display = "block";
+      render();
+    } else {
+      err.textContent = "账号或密码错误，请重试。";
+    }
+  }
+  document.getElementById("adminLogin").onclick = tryLogin;
+  document.getElementById("adminPass").addEventListener("keydown", function (e) { if (e.key === "Enter") tryLogin(); });
+  document.getElementById("adminLogout").onclick = function () {
+    document.getElementById("app").style.display = "none";
+    document.getElementById("loginLayer").style.display = "flex";
+    document.getElementById("adminPass").value = "";
+    document.getElementById("loginErr").textContent = "";
+  };
+
+  function showToast(msg) {
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    setTimeout(function () { t.classList.remove("show"); }, 1800);
+  }
+  function escapeHtml(s) { return String(s).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+
+  function render() {
+    var players = FunStore.listPlayers();
+    var list = document.getElementById("list");
+    if (!players.length) { list.innerHTML = '<div class="empty">暂无昵称存档。</div>'; return; }
+    list.innerHTML = players.map(function (p) {
+      var stat = "卡牌 " + (p.cards ? p.cards.length : 0) + " · 碎片 " + (p.fragments || 0) + "/20" + (p.completed ? " · 已完成" : "");
+      return '<div class="row">' +
+        '<div class="info"><div class="nm">' + escapeHtml(p.nick) + (p.nick === "yep" ? ' <span style="color:var(--coral-d);font-size:12px;">(测试号)</span>' : "") + "</div>" +
+        '<div class="meta">' + stat + "</div></div>" +
+        '<button class="btn danger" data-del="' + escapeHtml(p.nick) + '">删除</button>' +
+        "</div>";
+    }).join("");
+    list.querySelectorAll("[data-del]").forEach(function (b) {
+      b.onclick = function () {
+        var n = b.getAttribute("data-del");
+        if (confirm("确认删除昵称「" + n + "」的全部进度？")) {
+          FunStore.deleteProfile(n);
+          showToast("已删除「" + n + "」");
+          render();
+        }
+      };
+    });
+  }
+
+  document.getElementById("delYep").onclick = function () {
+    if (FunStore.exists("yep")) {
+      FunStore.deleteProfile("yep");
+      showToast("已清空「yep」的测试历史数据");
+    } else {
+      showToast("「yep」没有存档，无需清理");
+    }
+    render();
+  };
+  document.getElementById("delAll").onclick = function () {
+    if (confirm("确认清空浏览器内全部昵称存档？此操作不可恢复！")) {
+      FunStore.deleteAllProfiles();
+      showToast("已清空全部存档");
+      render();
+    }
+  };
+})();
+</script>
+</body>
+</html>

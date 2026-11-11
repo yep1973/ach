@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 800" width="1000" height="800">
+  <defs>
+    <linearGradient id="cn" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffd9a0"/>
+      <stop offset="0.5" stop-color="#ff9e7d"/>
+      <stop offset="1" stop-color="#ef6f6c"/>
+    </linearGradient>
+    <clipPath id="cnclip">
+      <path d="M120,250 L90,200 L140,170 L260,150 L380,135 L520,140 L640,120 L720,110 L800,150 L860,210 L900,300 L945,335 L905,420 L845,470 L800,505 L758,545 L722,582 L678,612 L620,602 L560,560 L500,540 L430,520 L360,500 L255,470 L170,420 L130,360 L150,300 Z"/>
+    </clipPath>
+  </defs>
+
+  <!-- 底色：形状外的画布（拼图参考用） -->
+  <rect width="1000" height="800" fill="#f3ece2"/>
+
+  <!-- 中国轮廓填充 + 内部装饰（裁剪在轮廓内） -->
+  <g clip-path="url(#cnclip)">
+    <rect width="1000" height="800" fill="url(#cn)"/>
+    <!-- 5x4 内部网格，使每块碎片内容可辨 -->
+    <g stroke="#ffffff" stroke-opacity="0.55" stroke-width="3">
+      <line x1="200" y1="0" x2="200" y2="800"/>
+      <line x1="400" y1="0" x2="400" y2="800"/>
+      <line x1="600" y1="0" x2="600" y2="800"/>
+      <line x1="800" y1="0" x2="800" y2="800"/>
+      <line x1="0" y1="200" x2="1000" y2="200"/>
+      <line x1="0" y1="400" x2="1000" y2="400"/>
+      <line x1="0" y1="600" x2="1000" y2="600"/>
+    </g>
+    <!-- 几条“江河”装饰线 -->
+    <path d="M540,150 C500,300 480,460 560,600" fill="none" stroke="#7ec8e3" stroke-width="6" stroke-opacity="0.7"/>
+    <path d="M300,180 C360,320 420,420 520,520" fill="none" stroke="#7ec8e3" stroke-width="5" stroke-opacity="0.6"/>
+    <!-- 主要城市点 -->
+    <g fill="#fff" stroke="#c0392b" stroke-width="2">
+      <circle cx="860" cy="300" r="9"/>
+      <circle cx="900" cy="420" r="9"/>
+      <circle cx="720" cy="430" r="9"/>
+      <circle cx="560" cy="360" r="9"/>
+      <circle cx="430" cy="430" r="9"/>
+      <circle cx="300" cy="350" r="9"/>
+      <circle cx="640" cy="560" r="9"/>
+    </g>
+    <!-- 中央水印 -->
+    <text x="500" y="430" font-size="150" font-family="sans-serif" font-weight="800"
+          text-anchor="middle" fill="#ffffff" fill-opacity="0.5">中国</text>
+  </g>
+
+  <!-- 轮廓描边 -->
+  <path d="M120,250 L90,200 L140,170 L260,150 L380,135 L520,140 L640,120 L720,110 L800,150 L860,210 L900,300 L945,335 L905,420 L845,470 L800,505 L758,545 L722,582 L678,612 L620,602 L560,560 L500,540 L430,520 L360,500 L255,470 L170,420 L130,360 L150,300 Z"
+        fill="none" stroke="#c0392b" stroke-width="5" stroke-linejoin="round"/>
+
+  <!-- 海南、台湾 -->
+  <ellipse cx="600" cy="660" rx="34" ry="22" fill="url(#cn)" stroke="#c0392b" stroke-width="4"/>
+  <path d="M928,548 L948,556 L944,592 L922,588 Z" fill="url(#cn)" stroke="#c0392b" stroke-width="4"/>
+</svg>

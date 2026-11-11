@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>趣味历史 · 玩着学中华上下五千年</title>
+  <link rel="stylesheet" href="css/fun.css" />
+</head>
+<body>
+  <!-- 顶部：标题 + 成长 HUD -->
+  <header class="topbar">
+    <a class="back-home" id="backHomeBtn" href="../index.html" title="返回中国历史学习系统，游戏将暂停">← 学习系统</a>
+    <div class="brand">
+      <span class="brand-seal">趣</span>
+      <div class="brand-text">
+        <h1>历史游乐园</h1>
+        <p>玩着学 · 中华上下五千年</p>
+      </div>
+    </div>
+    <div class="hud" id="hud">
+      <div class="hud-level" title="等级">
+        <span class="lv-badge" id="lvBadge">Lv.1</span>
+      </div>
+      <div class="hud-xp" title="经验值">
+        <div class="xp-track"><div class="xp-fill" id="xpFill"></div></div>
+        <span class="xp-text" id="xpText">0 / 200</span>
+      </div>
+      <div class="hud-stat" title="连续打卡"><span class="hud-ico">🔥</span><span id="streakNum">0</span></div>
+      <div class="hud-stat" title="徽章"><span class="hud-ico">🏅</span><span id="badgeNum">0</span></div>
+      <div class="hud-stat" title="收藏卡牌"><span class="hud-ico">🃏</span><span id="cardNum">0</span></div>
+      </div>
+      <div class="account" id="accountBox" style="display:none">
+        <span class="acc-nick" id="accNick">昵称</span>
+        <button class="acc-logout" id="accLogout">退出登录</button>
+      </div>
+      <div class="qr-corner" id="qrCorner" title="微信扫码，手机继续玩">
+        <img src="../qr-public/game-public.svg" alt="扫码在手机上玩" />
+        <span class="qr-tip">微信扫码<br/>手机继续玩</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- 导航 -->
+  <nav class="mainnav" id="mainnav">
+    <button class="nav-btn active" data-view="home">🏠 主页</button>
+    <button class="nav-btn" data-view="quiz">⚔️ 闯关答题</button>
+    <button class="nav-btn" data-view="drag">🎮 拖拽互动馆</button>
+    <button class="nav-btn" data-view="hall">🃏 历史藏馆</button>
+    <button class="nav-btn" data-view="theater">🎭 穿越剧场</button>
+  </nav>
+
+  <main class="stage">
+    <section class="view" id="view-home"></section>
+    <section class="view hidden" id="view-quiz"></section>
+    <section class="view hidden" id="view-drag"></section>
+    <section class="view hidden" id="view-hall"></section>
+    <section class="view hidden" id="view-theater"></section>
+  </main>
+
+  <!-- 徽章弹窗 -->
+  <div class="toast-wrap" id="toastWrap"></div>
+
+  <!-- 手机扫码弹窗 -->
+  <div class="qr-modal hidden" id="qrModal">
+    <div class="qr-modal-card">
+      <button class="qr-modal-close" id="qrModalClose" aria-label="关闭">×</button>
+      <h3>📱 手机继续玩</h3>
+      <img src="../qr-public/game-public.svg" alt="扫码在手机上玩" class="qr-modal-img" />
+      <p class="qr-modal-tip">微信扫一扫，在手机上打开「历史游乐园」继续答题闯关。<br>手机端与电脑端进度各自独立保存，方便随时随地游玩。</p>
+    </div>
+  </div>
+
+  <!-- 数据来源：复用现有历史学习系统的 data.js（主系统零改动） -->
+  <script src="../js/data.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/bridge.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="js/drag.js"></script>
+  <script src="js/hall.js"></script>
+  <script src="js/theater-data.js"></script>
+  <script src="js/theater-data-extra.js"></script>
+  <script src="js/theater-data-p2.js"></script>
+  <script src="js/theater-data-p3.js"></script>
+  <script src="js/theater-data-p4.js"></script>
+  <script src="js/theater.js"></script>
+  <script src="js/campaign.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

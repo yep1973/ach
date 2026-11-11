@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1005" font-family="'Noto Serif SC','Songti SC',serif">
+<rect x="0" y="0" width="1180" height="1005" fill="#f3f0e6"/>
+<line x1="131.1" y1="0" x2="131.1" y2="800" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="318.4" y1="0" x2="318.4" y2="800" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="505.7" y1="0" x2="505.7" y2="800" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="693.0" y1="0" x2="693.0" y2="800" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="880.3" y1="0" x2="880.3" y2="800" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="1067.6" y1="0" x2="1067.6" y2="800" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="0" y1="769.5" x2="1180" y2="769.5" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="0" y1="543.2" x2="1180" y2="543.2" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="0" y1="316.8" x2="1180" y2="316.8" stroke="#e5dfd2" stroke-width="1"/>
+<line x1="0" y1="90.5" x2="1180" y2="90.5" stroke="#e5dfd2" stroke-width="1"/>
+<path d="M 430.8,430.0 L 505.7,384.7 L 580.6,407.4 L 655.6,362.1 L 711.7,430.0 L 767.9,384.7 L 842.9,407.4 L 880.3,362.1" fill="none" stroke="#a9c9dd" stroke-width="2" stroke-linejoin="round" opacity="0.65"/>
+<text x="671.9" y="390.1" fill="#6f9bb8" font-size="12" text-anchor="middle">黄河</text>
+<path d="M 318.4,475.3 L 430.8,520.5 L 524.4,543.2 L 618.1,543.2 L 693.0,520.5 L 786.7,543.2 L 861.6,520.5 L 899.0,497.9" fill="none" stroke="#a9c9dd" stroke-width="2" stroke-linejoin="round" opacity="0.65"/>
+<text x="641.5" y="514.5" fill="#6f9bb8" font-size="12" text-anchor="middle">长江</text>
+<polygon points="9.4,328.2 37.5,316.8 131.1,203.7 168.6,192.4 224.8,158.4 262.2,113.2 318.4,135.8 412.1,203.7 505.7,271.6 599.4,271.6 693.0,248.9 786.7,203.7 880.3,135.8 917.8,90.5 974.0,22.6 1011.4,90.5 1067.6,113.2 1123.8,135.8 1161.3,158.4 1142.5,203.7 1086.3,248.9 1067.6,271.6 1030.2,316.8 974.0,316.8 917.8,316.8 899.0,339.5 861.6,339.5 842.9,362.1 917.8,384.7 880.3,430.0 880.3,497.9 917.8,520.5 899.0,588.4 880.3,656.3 824.1,701.6 749.2,724.2 693.0,746.8 655.6,735.5 618.1,724.2 599.4,701.6 561.9,712.9 524.4,746.8 487.0,701.6 468.3,678.9 449.5,656.3 468.3,611.1 449.5,588.4 430.8,565.8 412.1,588.4 355.9,588.4 281.0,588.4 224.8,588.4 149.8,543.2 112.4,497.9 93.7,430.0 37.5,407.4 9.4,384.7" fill="#fbf8f0" stroke="#cabfa6" stroke-width="1.3" stroke-dasharray="6 4"/>
+<polygon points="674.3,792.1 711.7,792.1 711.7,746.8 674.3,746.8" fill="#fbf8f0" stroke="#cabfa6" stroke-width="1.3" stroke-dasharray="6 4"/>
+<polygon points="880.3,724.2 917.8,724.2 917.8,645.0 880.3,645.0" fill="#fbf8f0" stroke="#cabfa6" stroke-width="1.3" stroke-dasharray="6 4"/>
+<text x="1002.1" y="712.9" fill="#b3a687" font-size="13" text-anchor="middle">今中国（参照）</text>
+<polygon points="602.0,410.0 602.6,376.9 653.3,371.7 656.5,408.4 708.6,407.7 714.3,475.3 568.6,474.4 573.7,404.4 602.0,410.0" fill="#c0504d" fill-opacity="0.62" stroke="#c0504d" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="736.7,404.0 737.6,376.4 798.1,372.3 795.2,405.3 826.5,411.4 824.7,443.3 798.3,443.7 794.3,473.7 765.8,477.3 769.0,443.0 742.9,439.7 741.7,475.5 714.3,475.3 708.6,407.7 736.7,404.0" fill="#4f81bd" fill-opacity="0.62" stroke="#4f81bd" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="653.3,371.7 737.6,376.4 736.7,404.0 656.5,408.4 653.3,371.7" fill="#9bbb59" fill-opacity="0.62" stroke="#9bbb59" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="878.3,376.8 737.6,376.4 739.6,304.8 850.1,306.2 853.1,340.2 859.1,339.0 842.2,363.7 878.3,376.8" fill="#8064a2" fill-opacity="0.62" stroke="#8064a2" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="742.9,439.7 769.0,443.0 765.8,477.3 850.7,474.6 849.3,508.0 736.7,510.6 742.9,439.7" fill="#f79646" fill-opacity="0.62" stroke="#f79646" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="795.0,580.5 792.9,546.9 764.9,544.0 770.6,509.5 849.3,508.0 850.7,474.6 878.9,471.9 883.3,498.2 908.9,513.5 906.9,555.4 905.1,576.5 795.0,580.5" fill="#2c4d75" fill-opacity="0.62" stroke="#2c4d75" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="794.3,473.7 798.3,443.7 824.7,443.3 824.2,477.8 794.3,473.7" fill="#2c4d75" fill-opacity="0.62" stroke="#2c4d75" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="712.7,577.6 512.1,576.2 513.1,539.4 485.4,542.1 484.1,506.9 515.3,505.5 511.8,474.9 680.9,471.9 680.8,509.8 711.7,506.1 712.7,577.6" fill="#bc8a3c" fill-opacity="0.62" stroke="#bc8a3c" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="654.3,716.1 608.4,715.9 602.3,702.8 600.8,644.2 654.7,643.8 655.2,680.6 823.8,675.8 821.6,702.7 749.1,725.8 695.1,744.0 655.9,739.1 654.3,716.1" fill="#a9d08e" fill-opacity="0.62" stroke="#a9d08e" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="461.7,308.9 569.2,305.0 569.3,340.3 599.5,341.3 602.0,410.0 458.1,411.0 461.7,308.9" fill="#c00000" fill-opacity="0.62" stroke="#c00000" stroke-width="1.8" stroke-linejoin="round"/>
+<polygon points="899.3,339.8 853.1,340.2 849.3,274.3 936.9,274.4 933.2,233.7 961.6,234.8 962.3,314.4 916.8,316.2 899.3,339.8" fill="#1f8a8a" fill-opacity="0.62" stroke="#1f8a8a" stroke-width="1.8" stroke-linejoin="round"/>
+<text x="641.5" y="447.6" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="18" font-weight="700">关内</text>
+<text x="641.5" y="447.6" fill="#2a241a" font-size="18" font-weight="700" text-anchor="middle">关内</text>
+<text x="672.4" y="451.8" fill="none" stroke="#fff" stroke-width="4" text-anchor="middle" font-size="20">★</text>
+<text x="672.4" y="451.8" fill="#9e1b1b" font-size="20" text-anchor="middle">★</text>
+<text x="672.4" y="467.8" fill="none" stroke="#fff" stroke-width="3.5" text-anchor="middle" font-size="12" font-weight="700">大兴</text>
+<text x="672.4" y="467.8" fill="#8a1d1d" font-size="12" font-weight="700" text-anchor="middle">大兴</text>
+<text x="767.9" y="430.6" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="18" font-weight="700">河南</text>
+<text x="767.9" y="430.6" fill="#2a241a" font-size="18" font-weight="700" text-anchor="middle">河南</text>
+<text x="697.7" y="396.0" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="16" font-weight="700">河东</text>
+<text x="697.7" y="396.0" fill="#2a241a" font-size="16" font-weight="700" text-anchor="middle">河东</text>
+<text x="796.0" y="328.8" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="18" font-weight="700">河北</text>
+<text x="796.0" y="328.8" fill="#2a241a" font-size="18" font-weight="700" text-anchor="middle">河北</text>
+<text x="753.9" y="463.9" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="16" font-weight="700">淮南</text>
+<text x="753.9" y="463.9" fill="#2a241a" font-size="16" font-weight="700" text-anchor="middle">淮南</text>
+<text x="838.2" y="535.3" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="18" font-weight="700">江南</text>
+<text x="838.2" y="535.3" fill="#2a241a" font-size="18" font-weight="700" text-anchor="middle">江南</text>
+<text x="599.4" y="533.2" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="20" font-weight="700">剑南</text>
+<text x="599.4" y="533.2" fill="#2a241a" font-size="20" font-weight="700" text-anchor="middle">剑南</text>
+<text x="711.7" y="696.6" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="18" font-weight="700">岭南</text>
+<text x="711.7" y="696.6" fill="#2a241a" font-size="18" font-weight="700" text-anchor="middle">岭南</text>
+<text x="529.1" y="380.4" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="20" font-weight="700">陇右</text>
+<text x="529.1" y="380.4" fill="#2a241a" font-size="20" font-weight="700" text-anchor="middle">陇右</text>
+<text x="908.4" y="300.5" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linejoin="round" text-anchor="middle" font-size="18" font-weight="700">辽东</text>
+<text x="908.4" y="300.5" fill="#2a241a" font-size="18" font-weight="700" text-anchor="middle">辽东</text>
+<text x="20" y="32" fill="none" stroke="#f3f0e6" stroke-width="7" font-size="22" font-weight="700">隋 · 疆域与政区图</text>
+<text x="20" y="32" fill="#3a4a55" font-size="22" font-weight="700">隋 · 疆域与政区图</text>
+<text x="20" y="54" fill="none" stroke="#f3f0e6" stroke-width="5" font-size="13">着色区块为该时期各政权 / 行政区的管辖范围，★ 为都城；虚线为今中国轮廓（定位参照）</text>
+<text x="20" y="54" fill="#7a8a90" font-size="13">着色区块为该时期各政权 / 行政区的管辖范围，★ 为都城；虚线为今中国轮廓（定位参照）</text>
+<g transform="translate(1124,56)"><line x1="0" y1="20" x2="0" y2="-16" stroke="#5a6b76" stroke-width="3"/><polygon points="0,-24 -7,-11 7,-11" fill="#5a6b76"/><text x="0" y="38" fill="#5a6b76" font-size="14" text-anchor="middle" font-weight="700">N</text></g>
+<text x="24" y="870" fill="#3a4a55" font-size="15" font-weight="700">政权 / 行政区（共 10）</text>
+<rect x="24" y="875" width="14" height="12" rx="3" fill="#c0504d" fill-opacity="0.65" stroke="#c0504d" stroke-width="1.4"/>
+<text x="44" y="886" fill="#3a3329" font-size="12.5">关内（京畿）</text>
+<rect x="24" y="895" width="14" height="12" rx="3" fill="#4f81bd" fill-opacity="0.65" stroke="#4f81bd" stroke-width="1.4"/>
+<text x="44" y="906" fill="#3a3329" font-size="12.5">河南</text>
+<rect x="24" y="915" width="14" height="12" rx="3" fill="#9bbb59" fill-opacity="0.65" stroke="#9bbb59" stroke-width="1.4"/>
+<text x="44" y="926" fill="#3a3329" font-size="12.5">河东</text>
+<rect x="24" y="935" width="14" height="12" rx="3" fill="#8064a2" fill-opacity="0.65" stroke="#8064a2" stroke-width="1.4"/>
+<text x="44" y="946" fill="#3a3329" font-size="12.5">河北</text>
+<rect x="401" y="875" width="14" height="12" rx="3" fill="#f79646" fill-opacity="0.65" stroke="#f79646" stroke-width="1.4"/>
+<text x="421" y="886" fill="#3a3329" font-size="12.5">淮南</text>
+<rect x="401" y="895" width="14" height="12" rx="3" fill="#2c4d75" fill-opacity="0.65" stroke="#2c4d75" stroke-width="1.4"/>
+<text x="421" y="906" fill="#3a3329" font-size="12.5">江南</text>
+<rect x="401" y="915" width="14" height="12" rx="3" fill="#bc8a3c" fill-opacity="0.65" stroke="#bc8a3c" stroke-width="1.4"/>
+<text x="421" y="926" fill="#3a3329" font-size="12.5">剑南（巴蜀）</text>
+<rect x="401" y="935" width="14" height="12" rx="3" fill="#a9d08e" fill-opacity="0.65" stroke="#a9d08e" stroke-width="1.4"/>
+<text x="421" y="946" fill="#3a3329" font-size="12.5">岭南</text>
+<rect x="779" y="875" width="14" height="12" rx="3" fill="#c00000" fill-opacity="0.65" stroke="#c00000" stroke-width="1.4"/>
+<text x="799" y="886" fill="#3a3329" font-size="12.5">陇右</text>
+<rect x="779" y="895" width="14" height="12" rx="3" fill="#1f8a8a" fill-opacity="0.65" stroke="#1f8a8a" stroke-width="1.4"/>
+<text x="799" y="906" fill="#3a3329" font-size="12.5">辽东</text>
+</svg>

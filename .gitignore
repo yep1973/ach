@@ -1,0 +1,18 @@
+# ===== 非站点文件（不纳入部署仓库） =====
+# 本地记忆与工具目录
+.workbuddy/
+
+# Python 构建脚本与缓存（产物 data.js / maps 已提交）
+*.py
+__pycache__/
+*.pyc
+
+# 冗余部署副本（保持仓库 = 单一可部署静态站）
+_deploy/
+deploy-cf/
+fun-dist/
+src_tmp/
+
+# 其他平台 / 后端（非本静态站所用）
+cloud/
+miniprogram/

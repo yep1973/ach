@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 1005" font-family="'PingFang SC','Microsoft YaHei',sans-serif">
+<rect x="0" y="0" width="1180" height="1005" fill="#f7f3ea"/>
+<line x1="131.1" y1="0" x2="131.1" y2="860" stroke="#e7e0d0" stroke-width="1"/>
+<text x="131.1" y="14" fill="#b3a98f" font-size="11" text-anchor="middle">80°E</text>
+<line x1="318.4" y1="0" x2="318.4" y2="860" stroke="#e7e0d0" stroke-width="1"/>
+<text x="318.4" y="14" fill="#b3a98f" font-size="11" text-anchor="middle">90°E</text>
+<line x1="505.7" y1="0" x2="505.7" y2="860" stroke="#e7e0d0" stroke-width="1"/>
+<text x="505.7" y="14" fill="#b3a98f" font-size="11" text-anchor="middle">100°E</text>
+<line x1="693.0" y1="0" x2="693.0" y2="860" stroke="#e7e0d0" stroke-width="1"/>
+<text x="693.0" y="14" fill="#b3a98f" font-size="11" text-anchor="middle">110°E</text>
+<line x1="880.3" y1="0" x2="880.3" y2="860" stroke="#e7e0d0" stroke-width="1"/>
+<text x="880.3" y="14" fill="#b3a98f" font-size="11" text-anchor="middle">120°E</text>
+<line x1="1067.6" y1="0" x2="1067.6" y2="860" stroke="#e7e0d0" stroke-width="1"/>
+<text x="1067.6" y="14" fill="#b3a98f" font-size="11" text-anchor="middle">130°E</text>
+<line x1="0" y1="769.5" x2="1180" y2="769.5" stroke="#e7e0d0" stroke-width="1"/>
+<text x="6" y="769.5-4" fill="#b3a98f" font-size="11">20°N</text>
+<line x1="0" y1="543.2" x2="1180" y2="543.2" stroke="#e7e0d0" stroke-width="1"/>
+<text x="6" y="543.2-4" fill="#b3a98f" font-size="11">30°N</text>
+<line x1="0" y1="316.8" x2="1180" y2="316.8" stroke="#e7e0d0" stroke-width="1"/>
+<text x="6" y="316.8-4" fill="#b3a98f" font-size="11">40°N</text>
+<line x1="0" y1="90.5" x2="1180" y2="90.5" stroke="#e7e0d0" stroke-width="1"/>
+<text x="6" y="90.5-4" fill="#b3a98f" font-size="11">50°N</text>
+<path d="M 430.8,430.0 L 505.7,384.7 L 580.6,407.4 L 655.6,362.1 L 711.7,430.0 L 767.9,384.7 L 842.9,407.4 L 880.3,362.1" fill="none" stroke="#9ec6e0" stroke-width="2.5" stroke-dasharray="7 5" opacity="0.8"/>
+<path d="M 318.4,475.3 L 430.8,520.5 L 524.4,543.2 L 618.1,543.2 L 693.0,520.5 L 786.7,543.2 L 861.6,520.5 L 899.0,497.9" fill="none" stroke="#9ec6e0" stroke-width="2.5" stroke-dasharray="7 5" opacity="0.8"/>
+<path d="M 9.4,328.2 L 37.5,316.8 L 131.1,203.7 L 168.6,192.4 L 224.8,158.4 L 262.2,113.2 L 318.4,135.8 L 412.1,203.7 L 505.7,271.6 L 599.4,271.6 L 693.0,248.9 L 786.7,203.7 L 880.3,135.8 L 917.8,90.5 L 974.0,22.6 L 1011.4,90.5 L 1067.6,113.2 L 1123.8,135.8 L 1161.3,158.4 L 1142.5,203.7 L 1086.3,248.9 L 1067.6,271.6 L 1030.2,316.8 L 974.0,316.8 L 917.8,316.8 L 899.0,339.5 L 861.6,339.5 L 842.9,362.1 L 917.8,384.7 L 880.3,430.0 L 880.3,497.9 L 917.8,520.5 L 899.0,588.4 L 880.3,656.3 L 824.1,701.6 L 749.2,724.2 L 693.0,746.8 L 655.6,735.5 L 618.1,724.2 L 599.4,701.6 L 561.9,712.9 L 524.4,746.8 L 487.0,701.6 L 468.3,678.9 L 449.5,656.3 L 468.3,611.1 L 449.5,588.4 L 430.8,565.8 L 412.1,588.4 L 355.9,588.4 L 281.0,588.4 L 224.8,588.4 L 149.8,543.2 L 112.4,497.9 L 93.7,430.0 L 37.5,407.4 L 9.4,384.7 Z" fill="#efe7d6" stroke="#9c8e6e" stroke-width="2.5"/>
+<path d="M 674.3,792.1 L 711.7,792.1 L 711.7,746.8 L 674.3,746.8 Z" fill="#efe7d6" stroke="#9c8e6e" stroke-width="1.5"/>
+<path d="M 880.3,724.2 L 917.8,724.2 L 917.8,645.0 L 880.3,645.0 Z" fill="#efe7d6" stroke="#9c8e6e" stroke-width="1.5"/>
+<g transform="translate(60,800)"><line x1="0" y1="22" x2="0" y2="-18" stroke="#5a6b76" stroke-width="3"/><polygon points="0,-26 -7,-13 7,-13" fill="#5a6b76"/><text x="0" y="40" fill="#5a6b76" font-size="14" text-anchor="middle" font-weight="700">N</text></g>
+<g>
+<circle cx="691.1" cy="518.3" r="7" fill="#f79646" stroke="#fff" stroke-width="2"/>
+<text x="702.1" y="522.3" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">巫山人</text>
+</g>
+<g>
+<circle cx="541.3" cy="640.5" r="7" fill="#f79646" stroke="#fff" stroke-width="2"/>
+<text x="552.3" y="644.5" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">元谋人</text>
+</g>
+<g>
+<circle cx="679.9" cy="448.1" r="7" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+<text x="690.9" y="452.1" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">蓝田人</text>
+</g>
+<g>
+<circle cx="700.5" cy="484.3" r="7" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+<text x="711.5" y="488.3" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">郧县人</text>
+</g>
+<g>
+<circle cx="861.6" cy="495.6" r="7" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+<text x="872.6" y="499.6" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">南京汤山人</text>
+</g>
+<g>
+<circle cx="850.3" cy="504.7" r="7" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+<text x="861.3" y="508.7" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">和县人</text>
+</g>
+<g>
+<circle cx="803.5" cy="323.6" r="7" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+<text x="814.5" y="327.6" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">北京人</text>
+</g>
+<g>
+<circle cx="917.8" cy="312.3" r="7" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+<text x="928.8" y="316.3" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">金牛山人</text>
+</g>
+<g>
+<circle cx="721.1" cy="411.9" r="7" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+<text x="732.1" y="415.9" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">丁村人</text>
+</g>
+<g>
+<circle cx="808.2" cy="329.3" r="7" fill="#70ad47" stroke="#fff" stroke-width="2"/>
+<text x="819.2" y="333.3" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">山顶洞人</text>
+</g>
+<g>
+<circle cx="681.8" cy="672.2" r="7" fill="#70ad47" stroke="#fff" stroke-width="2"/>
+<text x="692.8" y="676.2" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">柳江人</text>
+</g>
+<g>
+<circle cx="591.9" cy="540.9" r="7" fill="#70ad47" stroke="#fff" stroke-width="2"/>
+<text x="602.9" y="544.9" fill="#2c2418" font-size="13" font-weight="600" stroke="#f7f3ea" stroke-width="3" paint-order="stroke">资阳人</text>
+</g>
+<text x="590.0" y="40" fill="#3a2f1c" font-size="26" text-anchor="middle" font-weight="800">中国主要旧石器遗址分布图</text>
+<text x="590.0" y="64" fill="#7a6a4a" font-size="14" text-anchor="middle">（虚线为今中国轮廓参照；○ 标记代表性古人类遗址，按演化阶段着色）</text>
+<rect x="0" y="860" width="1180" height="145" fill="#efe7d6"/>
+<text x="30" y="894" fill="#3a2f1c" font-size="15" font-weight="700">演化阶段图例</text>
+<circle cx="38.0" cy="924.0" r="7" fill="#f79646" stroke="#fff" stroke-width="2"/>
+<text x="52.0" y="929.0" fill="#2c2418" font-size="14">早期直立人</text>
+<circle cx="218.0" cy="924.0" r="7" fill="#c0504d" stroke="#fff" stroke-width="2"/>
+<text x="232.0" y="929.0" fill="#2c2418" font-size="14">晚期直立人</text>
+<circle cx="398.0" cy="924.0" r="7" fill="#4f81bd" stroke="#fff" stroke-width="2"/>
+<text x="412.0" y="929.0" fill="#2c2418" font-size="14">早期智人</text>
+<circle cx="578.0" cy="924.0" r="7" fill="#70ad47" stroke="#fff" stroke-width="2"/>
+<text x="592.0" y="929.0" fill="#2c2418" font-size="14">晚期智人</text>
+<text x="30" y="962.0" fill="#7a6a4a" font-size="13">旧石器时代尚无国家与政区，故不画政权管辖区块，而展现早期人类在华夏大地的活动舞台（南北并茂、多点开花）。</text>
+</svg>

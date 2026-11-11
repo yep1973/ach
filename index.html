@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>中华历史脉络学习系统 · 旧石器—清</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- 顶部标题 -->
+  <header class="site-header">
+    <div class="header-inner">
+      <div class="brand">
+        <span class="seal">史</span>
+        <div class="brand-text">
+          <h1>中华历史脉络学习系统</h1>
+          <p class="subtitle">从旧石器时代到清朝 · 脉络 · 事件 · 人物 · 特点 · 测验</p>
+        </div>
+      </div>
+      <nav class="main-nav" id="mainNav">
+        <button class="nav-btn active" data-view="timeline">历史时间轴</button>
+        <button class="nav-btn" data-view="detail">朝代详解</button>
+        <button class="nav-btn" data-view="quiz">知识测验</button>
+        <button class="nav-btn" data-view="playground">历史游乐园</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="site-main">
+    <!-- ============ 视图：历史时间轴 ============ -->
+    <section class="view" id="view-timeline">
+      <div class="view-intro">
+        <h2>一、完整历史脉络与时间轴</h2>
+        <p>从旧石器时代的远古先祖、新石器文明的星火与三皇五帝的传说，经夏商周与秦扫六合的大一统、楚汉相争，到两汉盛世、魏晋南北朝的分裂融合，隋唐再造一统，再历五代十国的乱世、宋辽夏金的并立对峙，终由元明清三朝收束帝制长河。点击任意节点，可进入该阶段的详细解读。</p>
+      </div>
+      <div class="quick-stats" id="quickStats"></div>
+      <div class="timeline-wrap">
+        <div class="timeline" id="timeline"></div>
+      </div>
+      <div class="era-legend">
+        <span class="legend-item"><i class="dot legend-sanhuan"></i>远古传说</span>
+        <span class="legend-item"><i class="dot prehistoric"></i>史前文明</span>
+        <span class="legend-item"><i class="dot xia"></i>王朝奠基</span>
+        <span class="legend-item"><i class="dot zhou"></i>封建礼乐</span>
+        <span class="legend-item"><i class="dot spring"></i>争霸裂变</span>
+        <span class="legend-item"><i class="dot qin"></i>帝国一统</span>
+        <span class="legend-item"><i class="dot chuhan"></i>楚汉相争</span>
+        <span class="legend-item"><i class="dot lianghan"></i>两汉</span>
+        <span class="legend-item"><i class="dot weijin"></i>魏晋南北朝</span>
+        <span class="legend-item"><i class="dot suitang"></i>隋唐</span>
+        <span class="legend-item"><i class="dot wudai"></i>五代十国</span>
+        <span class="legend-item"><i class="dot song"></i>宋辽夏金</span>
+        <span class="legend-item"><i class="dot yuanqing"></i>元明清</span>
+      </div>
+    </section>
+
+    <!-- ============ 视图：朝代详解 ============ -->
+    <section class="view hidden" id="view-detail">
+      <div class="view-intro">
+        <h2>二、朝代详解：事件脉络与历史特点</h2>
+        <p>选择朝代，阅读三大维度：「事件脉络与转折点」「君王谱系与重要人物」「政治 · 经济 · 文化 · 商业 · 民风民俗 五大特点」。</p>
+      </div>
+      <div class="period-tabs" id="periodTabs"></div>
+
+      <div class="detail-body" id="detailBody">
+        <!-- 概况 -->
+        <div class="detail-section overview-card" id="overviewCard"></div>
+
+        <!-- 子标签：事件 / 人物 / 特点 -->
+        <div class="sub-nav" id="subNav">
+          <button class="sub-btn active" data-sub="events">事件脉络 · 转折点</button>
+          <button class="sub-btn" data-sub="figures">君王谱系 · 重要人物</button>
+          <button class="sub-btn" data-sub="features">历史特点（八维）</button>
+          <button class="sub-btn hidden" data-sub="schools" id="btnSchools">思想 · 文化</button>
+          <button class="sub-btn" data-sub="geo" id="btnGeo">疆域 · 地缘</button>
+        </div>
+
+        <div class="sub-panel" id="panelEvents"></div>
+        <div class="sub-panel hidden" id="panelFigures"></div>
+        <div class="sub-panel hidden" id="panelFeatures"></div>
+        <div class="sub-panel hidden" id="panelSchools"></div>
+        <div class="sub-panel hidden" id="panelGeo"></div>
+      </div>
+    </section>
+
+    <!-- ============ 视图：知识测验 ============ -->
+    <section class="view hidden" id="view-quiz">
+      <div class="view-intro">
+        <h2>三、按朝代划分的知识测验</h2>
+        <p>选择任一朝代进入测验。每答一题即时显示正确答案与解析，完成后给出成绩与错题回顾。</p>
+      </div>
+
+      <!-- 选择朝代 -->
+      <div class="quiz-select" id="quizSelect">
+        <h3>请选择要测试的朝代</h3>
+        <div class="quiz-chips" id="quizChips"></div>
+      </div>
+
+      <!-- 测验进行中 -->
+      <div class="quiz-run hidden" id="quizRun">
+        <div class="quiz-progress">
+          <span id="quizTitle"></span>
+          <span id="quizCounter"></span>
+        </div>
+        <div class="quiz-score-bar">
+          <div class="score-fill" id="scoreFill"></div>
+        </div>
+
+        <div class="quiz-question" id="quizQuestion"></div>
+
+        <div class="quiz-options" id="quizOptions"></div>
+
+        <button class="btn-primary hidden" id="quizSubmit">提交答案</button>
+
+        <div class="quiz-feedback hidden" id="quizFeedback"></div>
+
+        <div class="quiz-actions">
+          <button class="btn-ghost" id="btnPrev" disabled>上一题</button>
+          <button class="btn-primary" id="btnNext">下一题</button>
+        </div>
+      </div>
+
+      <!-- 测验结果 -->
+      <div class="quiz-result hidden" id="quizResult"></div>
+    </section>
+
+    <!-- ============ 视图：历史游乐园（趣味历史学习系统） ============ -->
+    <section class="view hidden" id="view-playground">
+      <div class="view-intro">
+        <h2>四、历史游乐园 · 玩着学中华上下五千年</h2>
+        <p>把枯燥阅读变成好玩的互动：创建你的游戏账号，在「闯关答题 · 拖拽互动 · 历史藏馆 · 穿越剧场」中收集历史人物卡牌；每 10 张自动合成 1 片中国地图碎片，集齐 20 片拼出完整中国地图即通关！</p>
+      </div>
+      <div class="playground-entry">
+        <div class="pg-entry-card">
+          <div class="pg-entry-seal">趣</div>
+          <h3>历史游乐园</h3>
+          <p class="pg-entry-sub">原「趣味历史学习系统」· 完整保留闯关 / 拖拽 / 藏馆 / 剧场四大玩法</p>
+          <ul class="pg-entry-list">
+            <li><span class="pg-dot">🎯</span> 终极目标：答题赢人物卡牌，集齐 20 片中国地图碎片拼出完整地图即通关</li>
+            <li><span class="pg-dot">🃏</span> 每 10 张卡牌自动合成 1 片地图碎片，进度永久保存</li>
+            <li><span class="pg-dot">📱</span> 进入后右上角可微信扫码，在手机上继续游玩</li>
+          </ul>
+          <a class="pg-enter-btn" href="fun/index.html">进入历史游乐园 ▶</a>
+          <p class="pg-entry-tip">点击后将整页进入游戏界面（铺满全屏），顶部「← 返回学习系统」可随时回到本系统</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <p>中华历史脉络学习系统 · 旧石器时代 — 清朝 · 内容供学习巩固使用，欢迎纠错补充</p>
+  </footer>
+
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
