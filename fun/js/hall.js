@@ -16,7 +16,7 @@
     var p = FunStore.get();
     var cards = p ? FunStore.uniqueCards() : [];     // 去重后的图鉴
     var totalCards = p ? FunStore.totalCards() : 0;  // 含重复：驱动碎片的总卡数
-    var fragTotal = (window.FunCampaign && window.FunCampaign.CONFIG) ? window.FunCampaign.CONFIG.FRAGMENTS_TOTAL : 20;
+    var fragTotal = (window.FunCampaign && window.FunCampaign.CONFIG) ? window.FunCampaign.CONFIG.FRAGMENTS_TOTAL : 34;
     var fragGot = p ? p.fragments : 0;
     var total = FunData.allNotables().length;
 
@@ -36,7 +36,7 @@
       '<div class="panel">' +
         '<div class="section-title">🃏 历史藏馆</div>' +
         '<div class="section-sub">已获得人物卡牌 <b>' + totalCards + '</b> 张（去重 ' + cards.length +
-          ' 位 / 全图鉴 ' + total + ' 位）。每集满 <b>10 张</b> 自动合成 1 片地图碎片，当前已集齐 <b>' + fragGot + ' / ' + fragTotal + '</b> 片。</div>' +
+          ' 位 / 全图鉴 ' + total + ' 位）。每集满 <b>10 张</b> 自动合成 1 片省级地图碎片，当前已集齐 <b>' + fragGot + ' / ' + fragTotal + '</b> 片（共 34 个省级行政区）。</div>' +
         '<div class="hall-grid">' + grid + "</div>" +
         '<div class="quiz-actions">' +
           '<button class="btn" id="hallGo">去闯关收集 →</button>' +

@@ -18,8 +18,10 @@ export default async function () {
     catch (e) { return null; }
   }));
 
+  const GOAL_FRAGMENTS = 34;
   const list = rows
-    .filter(function (p) { return p && p.completed; })
+    // 只统计按新目标（34 片省级行政区）通关的账号，旧版 20 片存档不计入
+    .filter(function (p) { return p && p.completed && Number(p.fragments) >= GOAL_FRAGMENTS; })
     .sort(function (a, b) {
       const av = a.completedMs == null ? 1e15 : Number(a.completedMs);
       const bv = b.completedMs == null ? 1e15 : Number(b.completedMs);

@@ -1,7 +1,8 @@
 /* ============================================================
    趣味历史乐园 · 终极目标流程（campaign 层）
-   登录(昵称唯一·续进度) → 游戏目标 → 多玩法发卡 → 每10卡合成地图碎片
-   → 阶段解锁提醒 → 集齐20片解锁中国地图拼图 → 结算 + 排名。
+   登录(账号唯一·续进度) → 游戏目标 → 多玩法发卡 → 每10卡合成1片省级地图碎片
+   → 集齐 34 片（34 个省级行政区）→ 34 片汇成中国地图 → 结算 + 排名。
+   碎片形状来自 fun/js/fragment-data.js 的真实行政区划边界。
    ============================================================ */
 (function () {
   "use strict";
@@ -13,54 +14,57 @@
     return d;
   }
 
-  /* ---------------- 规则配置（卡牌分配） ----------------
-     总目标 = 20 碎片 × 10 卡 = 200 卡。
-     每个玩法各有产卡上限，全局 200 卡封顶，鼓励玩家把玩法都体验一遍。 */
+  /* ---------------- 规则配置 ----------------
+     总目标 = 34 片 × 10 卡 = 340 张人物卡牌。
+     四种玩法产卡上限之和 = 100 + 120 + 60 + 60 = 340，必须都玩到才能通关。 */
   var CONFIG = {
-    FRAGMENTS_TOTAL: 20,
+    FRAGMENTS_TOTAL: 34,
     CARDS_PER_FRAGMENT: 10,
-    MODULE_CAPS: { quiz: 90, drag: 60, theater: 50, clue: 50 },
-    QUIZ_CARDS_PER_CORRECT: 1,   // 答题：每答对 1 题得 1 张卡牌（不论题型，同一题只给一张）
+    TOTAL_CARDS: 340,
+    MODULE_CAPS: { quiz: 100, drag: 120, theater: 60, clue: 60 },
+    QUIZ_CARDS_PER_CORRECT: 1,
     DRAG_GAME_CARDS: { sort: 4, link: 4 },
-    CLUE_REWARDS: { 1: 3, 2: 2, 3: 1 },  // 线索推理：用了几条提示答对 → 得几张卡
+    CLUE_REWARDS: { 1: 3, 2: 2, 3: 1 },
     THEATER_GRADE_CARDS: { S: 5, A: 4, B: 3, C: 2 }
   };
 
-  // 20 片中国地图碎片（区域命名，用于阶段解锁提醒 & 拼图）
-  var FRAGMENTS = [
-    { name: "东北 · 黑吉辽", color: "#e74c3c" },
-    { name: "华北 · 京津冀", color: "#e67e22" },
-    { name: "山西", color: "#f1c40f" },
-    { name: "内蒙古", color: "#2ecc71" },
-    { name: "西北 · 陕甘宁", color: "#16a085" },
-    { name: "新疆", color: "#1abc9c" },
-    { name: "青藏 · 青西", color: "#3498db" },
-    { name: "巴蜀 · 川渝", color: "#9b59b6" },
-    { name: "云贵", color: "#8e44ad" },
-    { name: "中原 · 河南", color: "#34495e" },
-    { name: "山东", color: "#c0392b" },
-    { name: "江淮 · 苏皖", color: "#d35400" },
-    { name: "上海", color: "#27ae60" },
-    { name: "浙江", color: "#2980b9" },
-    { name: "赣闽", color: "#8e44ad" },
-    { name: "两湖 · 鄂湘", color: "#137a4d" },
-    { name: "岭南 · 粤桂", color: "#f39c12" },
-    { name: "海南", color: "#e84393" },
-    { name: "台湾", color: "#00b894" },
-    { name: "港澳", color: "#fd79a8" }
-  ];
+  // 34 片省级行政区地图碎片：名称 / 类别 / 真实轮廓均取自地图数据
+  var MAP = window.FunFragmentMap || null;
+  var VB = MAP ? MAP.viewBox : [0, 0, 1000, 1146];
+  var FRAGMENTS = (MAP ? MAP.regions : []).map(function (r) {
+    return {
+      id: r.id, adcode: r.adcode, name: r.name, short: r.short, type: r.type,
+      color: r.color, path: r.path, box: r.box, cx: r.cx, cy: r.cy,
+      lx: r.lx, ly: r.ly, labelOffset: r.labelOffset, area: r.area, index: r.index
+    };
+  });
+  // 地图数据缺失时的兜底（保证流程仍可运行，形状退化为编号块）
+  if (FRAGMENTS.length !== CONFIG.FRAGMENTS_TOTAL) {
+    FRAGMENTS = [];
+    for (var fi = 1; fi <= CONFIG.FRAGMENTS_TOTAL; fi++) {
+      FRAGMENTS.push({ id: "r" + fi, name: "第 " + fi + " 片省级行政区", short: "第" + fi + "片",
+        type: "省级行政区", color: "#c8604f", path: "", box: [0, 0, 100, 100],
+        cx: 500, cy: 573, lx: 500, ly: 573, area: 1000, index: fi });
+    }
+  }
 
   var pendingFrags = [];   // 待展示的阶段提醒队列
   var footerTimer = null;
+  var finaleTimers = [];
 
-  // 拼图布局（5 列 × 4 行 = 20 块），与最终拼图、碎片图鉴共用同一套裁切坐标
-  var PUZ = { COLS: 5, ROWS: 4, CELL: 118 };
-  // 第 pos 块碎片在 china.svg 上的裁切背景（让“碎片”真的是中国地图的一块）
-  function fragCrop(pos) {
-    var COLS = PUZ.COLS, cell = PUZ.CELL, W = COLS * cell, H = PUZ.ROWS * cell;
-    var r = Math.floor(pos / COLS), c = pos % COLS;
-    return "url(maps/china.svg) " + (-c * cell) + "px " + (-r * cell) + "px / " + W + "px " + H + "px no-repeat";
+  /* ---------------- 碎片 SVG ---------------- */
+  // 单块碎片：按该行政区的真实取景框放大显示（阶段弹窗 / 图鉴共用）
+  function fragSvg(r, cls) {
+    var b = r.box || [0, 0, VB[2], VB[3]];
+    var sw = Math.max(0.9, (b[2] / 110) * 1.6);
+    if (!r.path) return '<div class="frag-fallback">' + r.short + "</div>";
+    return '<svg class="' + (cls || "") + '" viewBox="' + b.join(" ") + '" ' +
+      'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="' + r.name + '">' +
+      '<path d="' + r.path + '" fill="' + r.color + '" stroke="#7e3b2c" stroke-width="' +
+      sw.toFixed(2) + '" stroke-linejoin="round" fill-rule="evenodd"/>' +
+      "</svg>";
   }
+  function vbStr() { return VB.join(" "); }
 
   /* ================= 登录门 ================= */
   function showLogin() {
@@ -72,7 +76,7 @@
         '<div class="login-seal">趣</div>' +
         "<h2>趣味历史乐园</h2>" +
         '<p class="login-sub">玩着学 · 中华上下五千年</p>' +
-        '<div class="login-rule">🎯 <b>终极目标：</b>答题赢人物卡牌，每 10 张合成 1 片中国地图碎片，集齐 20 片拼出当代<b>中国地图</b>即通关！</div>' +
+        '<div class="login-rule">🎯 <b>终极目标：</b>答题赢人物卡牌，每 <b>10 张</b>合成 1 片省级地图碎片，集齐 <b>34 片</b>（对应 34 个省级行政区）拼出完整<b>中国地图</b>即通关！</div>' +
         '<label class="login-label">游戏账号（用于登录，唯一不可重复）</label>' +
         '<input id="accInput" class="login-input" maxlength="20" placeholder="例如：player_001" />' +
         '<label class="login-label">昵称（展示名）</label>' +
@@ -94,8 +98,7 @@
       if (!v.trim()) { el("nickErr").textContent = "请输入昵称"; return; }
       var r = FunStore.loginOrCreate(a, v);
       if (!r.ok) { el("nickErr").textContent = r.msg; return; }
-      // 关键：必须先等云端档案拉回来再渲染游戏界面。
-      // 否则手机扫码登录时会先显示一份刚新建的空白本地档，看起来就是「和电脑不同步」。
+      // 必须先等云端档案拉回来再渲染，否则手机扫码登录会先看到一份空白本地档
       if (!(window.FunStore && FunStore.syncFromCloud)) { onEntered(r); return; }
       var btn = el("enterBtn");
       if (btn) { btn.disabled = true; btn.textContent = "正在同步云端进度…"; }
@@ -109,13 +112,12 @@
     el("enterBtn").onclick = tryEnter;
     input.onkeydown = function (e) { if (e.key === "Enter") tryEnter(); };
     accInput.onkeydown = function (e) { if (e.key === "Enter") { input.focus(); } };
-    // 登录页面提供“返回学习系统”接口：清空活动会话（不影响已存账号与进度）后跳转
     var lbh = el("loginBackHome");
     if (lbh) lbh.onclick = function () {
       if (window.FunStore && FunStore.tempExit) FunStore.tempExit();
       window.location.href = "../index.html";
     };
-    if (window.FunUI && FunUI.renderAccount) FunUI.renderAccount(); // 未登录时隐藏右上角账户区
+    if (window.FunUI && FunUI.renderAccount) FunUI.renderAccount();
   }
 
   function onEntered(r) {
@@ -135,26 +137,25 @@
     hideAll();
     startFooter();
     FunStore.markPlaying(true);
-    // 直接进入主页
     if (window.FunUI) { FunUI.go("home"); FunUI.renderAccount(); }
   }
 
   /* ================= 游戏目标弹窗 ================= */
   function showObjectives(done) {
     var layer = ensureLayer("objLayer", "campaign-layer");
-    var dist = CONFIG;
+    var c = CONFIG.MODULE_CAPS;
     layer.innerHTML =
       '<div class="campaign-card obj-card">' +
         '<div class="obj-badge">🧩</div>' +
         "<h2>游戏目标</h2>" +
-        '<p class="obj-lead">通过答题与互动收集 <b>200 张</b>历史人物卡牌，每 <b>10 张</b>自动合成 1 片<b>中国地图碎片</b>，集齐 <b>20 片</b>后拼出完整中国地图，即完成终极目标！</p>' +
+        '<p class="obj-lead">通过四种玩法收集 <b>340 张</b>历史人物卡牌，每 <b>10 张</b>自动合成 1 片<b>省级地图碎片</b>；集齐 <b>34 片</b>（23 个省、5 个自治区、4 个直辖市、2 个特别行政区）后，34 片汇成完整<b>中国地图</b>，即完成终极目标！</p>' +
         '<div class="obj-how">' +
-          '<div class="obj-row"><span class="obj-ico">⚔️</span><div><b>闯关答题</b>（最多 '+dist.MODULE_CAPS.quiz+' 张）<br><span class="obj-dim">每答对一题获得 1 张人物卡牌（不限题型）</span></div></div>' +
-          '<div class="obj-row"><span class="obj-ico">🕵️</span><div><b>线索推理</b>（最多 '+dist.MODULE_CAPS.clue+' 张）<br><span class="obj-dim">三条线索由难到易依次给出；1 / 2 / 3 条猜中得 3 / 2 / 1 张</span></div></div>' +
-          '<div class="obj-row"><span class="obj-ico">🎮</span><div><b>拖拽互动馆</b>（最多 '+dist.MODULE_CAPS.drag+' 张）<br><span class="obj-dim">时间轴排序 / 连连看，每通关 1 次 4 张</span></div></div>' +
-          '<div class="obj-row"><span class="obj-ico">🎭</span><div><b>穿越剧场</b>（最多 '+dist.MODULE_CAPS.theater+' 张）<br><span class="obj-dim">按结局评级：S 5 / A 4 / B 3 / C 2 张</span></div></div>' +
+          '<div class="obj-row"><span class="obj-ico">⚔️</span><div><b>闯关答题</b>（最多 ' + c.quiz + ' 张）<br><span class="obj-dim">每答对一题获得 1 张人物卡牌（不限题型）</span></div></div>' +
+          '<div class="obj-row"><span class="obj-ico">🎮</span><div><b>拖拽互动馆</b>（最多 ' + c.drag + ' 张）<br><span class="obj-dim">时间轴排序 / 连连看，每通关 1 次 4 张</span></div></div>' +
+          '<div class="obj-row"><span class="obj-ico">🕵️</span><div><b>线索推理</b>（最多 ' + c.clue + ' 张）<br><span class="obj-dim">三条线索由难到易；1 / 2 / 3 条猜中得 3 / 2 / 1 张</span></div></div>' +
+          '<div class="obj-row"><span class="obj-ico">🎭</span><div><b>穿越剧场</b>（最多 ' + c.theater + ' 张）<br><span class="obj-dim">按结局评级：S 5 / A 4 / B 3 / C 2 张</span></div></div>' +
         "</div>" +
-        '<p class="obj-tip">💡 每种玩法都设有产卡上限，只刷一种无法快速集齐——多试几种，越玩越上头！</p>' +
+        '<p class="obj-tip">💡 四种玩法的产卡上限合计正好 <b>340 张 = 34 片 × 10 张</b>，只刷一种无法通关——每种都要体验！</p>' +
         '<button id="objStart" class="btn login-btn">开始游戏 ▶</button>' +
       "</div>";
     layer.classList.remove("hidden");
@@ -169,10 +170,10 @@
     f.id = "campFooter";
     f.innerHTML =
       '<div class="cf-item"><span class="cf-ico">⏱</span><span class="cf-label">总时长</span><b id="cfTime">00:00</b></div>' +
-      '<div class="cf-item cf-frag"><span class="cf-ico">🧩</span><span class="cf-label">地图碎片</span><b id="cfFrag">0 / 20</b></div>' +
+      '<div class="cf-item cf-frag"><span class="cf-ico">🧩</span><span class="cf-label">地图碎片</span><b id="cfFrag">0 / ' + CONFIG.FRAGMENTS_TOTAL + '</b></div>' +
       '<div class="cf-item"><span class="cf-ico">🃏</span><span class="cf-label">卡牌</span><b id="cfCards">0</b></div>' +
       '<button class="cf-btn ghost" id="cfGoal">目标</button>' +
-      '<button class="cf-btn" id="cfPuzzle">🔓 解锁最终拼图</button>';
+      '<button class="cf-btn" id="cfPuzzle">🔓 观看最终拼图</button>';
     document.body.appendChild(f);
     el("cfGoal").onclick = function () { showObjectives(function () {}); };
     el("cfPuzzle").onclick = function () { openPuzzle(); };
@@ -194,7 +195,7 @@
     f.classList.remove("hidden");
     el("cfTime").textContent = FunStore.fmtTime(p.playedMs);
     el("cfFrag").textContent = p.fragments + " / " + CONFIG.FRAGMENTS_TOTAL;
-    el("cfCards").textContent = FunStore.totalCards();
+    el("cfCards").textContent = FunStore.totalCards() + " / " + CONFIG.TOTAL_CARDS;
     var puzzleBtn = el("cfPuzzle");
     if (p.fragments >= CONFIG.FRAGMENTS_TOTAL) {
       puzzleBtn.classList.remove("hidden");
@@ -205,12 +206,12 @@
   }
 
   /* ================= 发卡 + 阶段提醒 ================= */
-  // 供各玩法模块调用（答题 / 线索推理 / 拖拽 / 剧场）
   function award(module, count, dynId, opts) {
     var res = FunStore.awardCards(module, count, dynId, opts);
     if (res.fragGained > 0) {
-      for (var i = 0; i < res.fragGained; i++) pendingFrags.push(FunStore.get().fragments - res.fragGained + i + 1);
-      toast("🧩 解锁第 " + FunStore.get().fragments + " 片地图碎片！");
+      var p = FunStore.get();
+      for (var i = 0; i < res.fragGained; i++) pendingFrags.push(p.fragments - res.fragGained + i + 1);
+      toast("🧩 解锁第 " + p.fragments + " 片省级地图碎片！");
       pulseFrag();
       flushFragModal();
     }
@@ -219,7 +220,6 @@
     return res;
   }
 
-  // 顶部轻提示：确保「阶段解锁」一定被看到
   function toast(msg) {
     var t = el("fragToast");
     if (!t) { t = ce("div", "frag-toast hidden"); t.id = "fragToast"; document.body.appendChild(t); }
@@ -230,18 +230,17 @@
     t._timer = setTimeout(function () { t.classList.remove("show"); t.classList.add("hidden"); }, 2600);
   }
 
-  // 底栏碎片数字脉冲，强化反馈
   function pulseFrag() {
     var cf = el("cfFrag");
     if (!cf) return;
     cf.classList.remove("pulse");
-    void cf.offsetWidth; // 强制回流以重启动画
+    void cf.offsetWidth;
     cf.classList.add("pulse");
   }
 
   function flushFragModal() {
     var ex = el("fragModal");
-    if (ex && !ex.classList.contains("hidden")) return; // 已有在展示，等其关闭再排
+    if (ex && !ex.classList.contains("hidden")) return;
     if (!pendingFrags.length) return;
     var num = pendingFrags.shift();
     var frag = FRAGMENTS[(num - 1) % FRAGMENTS.length];
@@ -249,166 +248,114 @@
     layer.innerHTML =
       '<div class="campaign-card frag-card">' +
         '<div class="frag-ribbon" style="background:' + frag.color + '">阶段解锁</div>' +
-        '<div class="frag-piece" style="background-image:' + fragCrop(num - 1) + ';background-size:cover;"><span class="fp-num">' + num + " / 20</span></div>" +
+        '<div class="frag-piece">' + fragSvg(frag, "frag-shape") +
+          '<span class="fp-num">' + num + " / " + CONFIG.FRAGMENTS_TOTAL + "</span></div>" +
         '<h2>🧩 合成第 ' + num + ' 片地图碎片！</h2>' +
         '<p class="frag-name" style="color:' + frag.color + '">「' + frag.name + '」</p>' +
-        '<p class="frag-sub">已集齐 ' + FunStore.get().fragments + " / " + CONFIG.FRAGMENTS_TOTAL + " 片，离拼出中国地图又近一步！</p>" +
+        '<p class="frag-kind">' + frag.type + ' · 34 个省级行政区之一 · 真实行政区划轮廓</p>' +
+        '<p class="frag-sub">已集齐 ' + FunStore.get().fragments + " / " + CONFIG.FRAGMENTS_TOTAL +
+          " 片，离拼出完整中国地图又近一步！</p>" +
         '<button id="fragOk" class="btn login-btn">继续 ▶</button>' +
       "</div>";
     layer.classList.remove("hidden");
     el("fragOk").onclick = function () {
       layer.classList.add("hidden");
-      if (pendingFrags.length) flushFragModal();
+      if (pendingFrags.length) { flushFragModal(); return; }
+      // 最后一片也看完 → 自动进入 34 片汇入的震撼结算
+      if (FunStore.get().fragments >= CONFIG.FRAGMENTS_TOTAL) openPuzzle();
     };
   }
 
-  /* ================= 最终拼图 ================= */
+  /* ================= 最终拼合动画 + 结算 ================= */
+  /* 集齐 34 片后：34 块真实省份轮廓从四面八方飞入归位 → 完整中国地图
+     → 浮现巨大的「中国」二字 → 显示通关时间与排名。 */
   function openPuzzle() {
     var p = FunStore.get();
     if (!p || p.fragments < CONFIG.FRAGMENTS_TOTAL) return;
-    hideAll();
-    FunStore.markPlaying(false);
-    var layer = ensureLayer("puzzleLayer", "campaign-layer puzzle-layer");
-    var COLS = PUZ.COLS, ROWS = PUZ.ROWS, N = COLS * ROWS;
-    var cell = PUZ.CELL, W = COLS * cell, H = ROWS * cell;
-    var hintSlot = -1;
-    // 初始打乱（确保非已解）
-    var order = shuffleRange(N);
-    layer.innerHTML =
-      '<div class="puzzle-wrap">' +
-        '<div class="puzzle-head"><h2>🗺️ 拼出中国地图</h2>' +
-          '<p>把 20 块碎片拖到正确位置，拼出完整的当代中国地图！</p>' +
-          '<div class="puzzle-prog" id="pzProg">已就位 0 / ' + N + '</div>' +
-          '<div class="puzzle-tools">' +
-            '<button id="pzHint" class="btn ghost">💡 提示</button>' +
-            '<button id="pzSnap" class="btn ghost">🧲 自动吸附</button>' +
-            '<button id="pzShuffle" class="btn ghost">打乱重来</button>' +
-          '</div></div>' +
-        '<div class="puzzle-board" id="pzBoard" style="width:' + W + 'px;height:' + H + 'px;"></div>' +
-        '<div class="puzzle-ref"><h4>🎯 目标图</h4><img src="maps/china.svg" width="220" style="border-radius:12px;box-shadow:var(--shadow);background:#fff"/><p class="pz-hint">拖动碎片交换位置；拿不准就点「提示」看正确位置，或点「自动吸附」帮你归位一块。</p></div>' +
-      "</div>";
-    layer.classList.remove("hidden");
-
-    function tileBg(pos) {
-      var r = Math.floor(pos / COLS), c = pos % COLS;
-      return "url(maps/china.svg) " + (-c * cell) + "px " + (-r * cell) + "px / " + W + "px " + H + "px no-repeat";
-    }
-    function correctCount() { var n = 0; for (var s = 0; s < N; s++) if (order[s] === s) n++; return n; }
-
-    function draw() {
-      var board = el("pzBoard");
-      board.innerHTML = "";
-      for (var s = 0; s < N; s++) {
-        var slot = ce("div", "pz-cell");
-        slot.setAttribute("data-s", s);
-        var tp = order[s];
-        var tile = ce("div", "pz-frag");
-        tile.style.background = tileBg(tp);
-        tile.setAttribute("data-pos", tp);
-        tile.draggable = true;
-        tile.ondragstart = function (ev) {
-          ev.dataTransfer.setData("text/plain", ev.target.getAttribute("data-pos"));
-          ev.target.classList.add("dragging");
-        };
-        tile.ondragend = function (ev) { ev.target.classList.remove("dragging"); };
-        slot.appendChild(tile);
-        slot.ondragover = function (ev) { ev.preventDefault(); };
-        slot.ondrop = function (ev) {
-          ev.preventDefault();
-          var from = parseInt(ev.dataTransfer.getData("text/plain"), 10);
-          var to = parseInt(ev.currentTarget.getAttribute("data-s"), 10);
-          var fi = order.indexOf(from);
-          if (fi === to) return; // 拖回自己所在槽位，无需交换
-          // 交换两格上的碎片（from 为被拖碎片的值，to 为目标槽位下标）
-          var t = order[fi]; order[fi] = order[to]; order[to] = t;
-          draw(); updateProg();
-        };
-        if (order[s] === s) slot.classList.add("placed");
-        if (s === hintSlot) slot.classList.add("hint");
-        board.appendChild(slot);
-      }
-    }
-    function updateProg() {
-      var c = correctCount();
-      el("pzProg").textContent = "已就位 " + c + " / " + N;
-      if (c === N) winPuzzle(layer);
-    }
-    function winPuzzle(layer) {
-      FunStore.complete();
-      if (footerTimer) clearInterval(footerTimer);
-      var f = el("campFooter"); if (f) f.classList.add("hidden");
-      setTimeout(function () { showSettlement(); }, 700);
-    }
-    el("pzShuffle").onclick = function () { order = shuffleRange(N); hintSlot = -1; draw(); updateProg(); };
-    el("pzHint").onclick = function () {
-      hintSlot = -1;
-      for (var s = 0; s < N; s++) { if (order[s] !== s) { hintSlot = s; break; } }
-      draw();
-      if (hintSlot >= 0) setTimeout(function () { hintSlot = -1; draw(); }, 2500);
-    };
-    el("pzSnap").onclick = function () {
-      var s = -1; for (var k = 0; k < N; k++) { if (order[k] !== k) { s = k; break; } }
-      if (s < 0) return;
-      var j = order.indexOf(s);
-      var t = order[s]; order[s] = order[j]; order[j] = t;
-      hintSlot = -1; draw(); updateProg();
-    };
-
-    function shuffleRange(n) {
-      var a = []; for (var i = 0; i < n; i++) a.push(i);
-      for (var j = a.length - 1; j > 0; j--) { var k = Math.floor(Math.random() * (j + 1)); var t = a[j]; a[j] = a[k]; a[k] = t; }
-      // 避免一上来就是解好的
-      var solved = true; for (var s = 0; s < n; s++) { if (a[s] !== s) { solved = false; break; } }
-      if (solved) { var x = a[0]; a[0] = a[1]; a[1] = x; }
-      return a;
-    }
-
-    draw(); updateProg();
+    showFinale(false);
   }
+  function showSettlement() { showFinale(true); }   // 已通关账号再次进入：直接看结果
 
-  /* ================= 结算 + 排名 ================= */
-  function showSettlement() {
+  function showFinale(skipFly) {
     var p = FunStore.get();
-    var rank = FunStore.ranking();
-    // 渲染排行榜列表（本地榜与云端榜共用）
-    function renderRank(list) {
-      var box = el("rankList");
-      if (!box) return;
-      if (!list || !list.length) { box.innerHTML = '<p style="color:var(--ink-soft)">暂无其他玩家记录</p>'; return; }
-      box.innerHTML = list.map(function (rp, i) {
-        var me = rp.account === p.account;
-        var frag = (rp.fragments != null) ? rp.fragments : (rp.cards || 0);
-        return '<div class="rank-row' + (me ? " me" : "") + '">' +
-          '<span class="rank-no">' + (i + 1) + '</span>' +
-          '<span class="rank-name">' + escapeHtml(rp.nick) + (me ? " （你）" : "") + '</span>' +
-          '<span class="rank-time">⏱ ' + FunStore.fmtTime(rp.completedMs) + '</span>' +
-          '<span class="rank-frag">🧩 ' + frag + '</span>' +
-        "</div>";
-      }).join("");
+    if (!p) return;
+    hideAll();
+    finaleTimers.forEach(clearTimeout);
+    finaleTimers = [];
+    clearFooterTimer();
+    if (!p.completed) FunStore.complete();          // 记录通关用时并写入排行榜
+    p = FunStore.get();
+    FunStore.markPlaying(false);
+    var f = el("campFooter"); if (f) f.classList.add("hidden");
+
+    var layer = ensureLayer("finaleLayer", "campaign-layer finale-layer");
+    var pieces = "", labels = "";
+    for (var i = 0; i < FRAGMENTS.length; i++) {
+      var r = FRAGMENTS[i];
+      var ang = (i / FRAGMENTS.length) * Math.PI * 2 + (i % 3) * 0.35;
+      var dist = 660 + (i % 5) * 135;
+      var dx = Math.round(Math.cos(ang) * dist);
+      var dy = Math.round(Math.sin(ang) * dist * 0.74);
+      var rot = ((i * 47) % 150) - 75;
+      var sc = r.area < 700 ? 3.4 : (1.05 + (i % 4) * 0.16);
+      var delay = (0.10 + (i % 17) * 0.055).toFixed(2);
+      pieces += '<svg class="fn-piece" viewBox="' + vbStr() + '" preserveAspectRatio="xMidYMid meet" ' +
+        'style="--dx:' + dx + 'px;--dy:' + dy + 'px;--rot:' + rot + 'deg;--sc:' + sc +
+        ';--d:' + delay + 's" aria-label="' + r.name + '">' +
+        '<path d="' + r.path + '" fill="' + r.color + '" stroke="#7e3b2c" ' +
+        'stroke-width="1.8" stroke-linejoin="round" fill-rule="evenodd"/></svg>';
+      if (r.labelOffset && (r.labelOffset[0] || r.labelOffset[1])) {
+        labels += '<line x1="' + r.cx + '" y1="' + r.cy + '" x2="' + r.lx + '" y2="' + r.ly +
+          '" stroke="#f5e2b8" stroke-width="1.4" opacity=".85"/>';
+      }
+      labels += '<text x="' + r.lx + '" y="' + (r.ly + 5) + '">' + r.short + "</text>";
     }
 
-    var layer = ensureLayer("settleLayer", "campaign-layer settle-layer");
     layer.innerHTML =
-      '<div class="campaign-card settle-card">' +
-        '<div class="settle-crown">👑</div>' +
-        "<h2>通关啦！一统江山</h2>" +
-        '<p class="settle-sub">' + escapeHtml(p.nick) + "，你用 <b>" + FunStore.fmtTime(p.completedMs) + "</b> 拼出了完整的中国地图！</p>" +
-        '<div class="settle-stats">' +
-          '<div class="ss"><span>🃏 收集卡牌</span><b>' + FunStore.totalCards() + ' 张</b></div>' +
-          '<div class="ss"><span>🧩 地图碎片</span><b>' + p.fragments + ' / 20</b></div>' +
-          '<div class="ss"><span>🏅 徽章</span><b>' + FunStore.badgeCount() + ' 枚</b></div>' +
-          '<div class="ss"><span>📊 总时长</span><b>' + FunStore.fmtTime(p.completedMs) + '</b></div>' +
+      '<div class="fn-glow"></div>' +
+      '<div class="fn-shell">' +
+        '<div class="fn-left">' +
+          '<div class="fn-caption">三十四片山河 · 汇成一幅中国</div>' +
+          '<div class="fn-stage" id="fnStage">' +
+            '<div class="fn-map" id="fnMap">' +
+              pieces +
+              (MAP ? '<svg class="fn-nine" viewBox="' + vbStr() + '" preserveAspectRatio="xMidYMid meet">' +
+                '<path d="' + MAP.nineDash + '" fill="#e8b96a" fill-rule="evenodd"/></svg>' : "") +
+              '<svg class="fn-labels" viewBox="' + vbStr() + '" preserveAspectRatio="xMidYMid meet">' +
+                labels + "</svg>" +
+            "</div>" +
+            '<div class="fn-china"><span>中</span><span>国</span><i>山河一统</i></div>' +
+          "</div>" +
+          '<div class="fn-note">地图含 34 个省级行政区及南海诸岛；台湾省、香港特别行政区、澳门特别行政区均为中国领土不可分割的部分。</div>' +
         "</div>" +
-        '<div class="rank-title">🏆 玩家排名（按通关用时）</div>' +
-        '<div class="rank-list" id="rankList"></div>' +
-        '<div class="settle-actions">' +
-          '<button id="settleRestart" class="btn">重新开始挑战 ↻</button>' +
-          '<button id="settleExit" class="btn ghost">退出系统</button>' +
+        '<div class="fn-right">' +
+          '<div class="fn-result" id="fnResult">' +
+            '<div class="fn-crown">👑</div>' +
+            '<h2>通关啦！一统山河</h2>' +
+            '<p class="fn-sub">' + escapeHtml(p.nick) + "，你用 <b>" + FunStore.fmtTime(p.completedMs) +
+              "</b> 集齐 34 片省级地图碎片，拼出了完整的中国地图！</p>" +
+            '<div class="fn-time"><span>⏱ 通关用时</span><b>' + FunStore.fmtTime(p.completedMs) + "</b></div>" +
+            '<div class="fn-stats">' +
+              '<div class="ss"><span>🃏 收集卡牌</span><b>' + FunStore.totalCards() + " / " + CONFIG.TOTAL_CARDS + "</b></div>" +
+              '<div class="ss"><span>🧩 省级碎片</span><b>' + p.fragments + " / " + CONFIG.FRAGMENTS_TOTAL + "</b></div>" +
+              '<div class="ss"><span>🏅 徽章</span><b>' + FunStore.badgeCount() + " 枚</b></div>" +
+              '<div class="ss"><span>🗺️ 行政区划</span><b>34 / 34</b></div>' +
+            "</div>" +
+            '<div class="rank-title">🏆 玩家排名（按通关用时）</div>' +
+            '<div class="rank-list" id="rankList"></div>' +
+            '<div class="settle-actions">' +
+              '<button id="settleRestart" class="btn">重新开始挑战 ↻</button>' +
+              '<button id="settleExit" class="btn ghost">退出系统</button>' +
+            "</div>" +
+          "</div>" +
         "</div>" +
       "</div>";
     layer.classList.remove("hidden");
-    renderRank(rank);   // 先显示本地榜
-    if (window.FunStore.cloudRanking) FunStore.cloudRanking(function (list) { if (list) renderRank(list); }); // 云端榜覆盖（若可用）
+
+    // 排名：先本地榜，再用云端榜覆盖
+    renderRank(FunStore.ranking());
+    if (window.FunStore.cloudRanking) FunStore.cloudRanking(function (list) { if (list) renderRank(list); });
+
     el("settleRestart").onclick = function () {
       if (!confirm("确定要清空当前进度、重新开始挑战吗？")) return;
       FunStore.resetProgress();
@@ -420,31 +367,64 @@
       layer.classList.add("hidden");
       showLogin();
     };
+
+    if (skipFly) {
+      layer.classList.add("fn-assembled", "fn-china-show", "fn-result-show");
+    } else {
+      // 双 rAF 保证浏览器先绘制初态再播放过渡
+      var raf = window.requestAnimationFrame || function (fn) { return setTimeout(fn, 16); };
+      raf(function () {
+        raf(function () { layer.classList.add("fn-fly"); });
+      });
+      finaleTimers.push(setTimeout(function () { layer.classList.add("fn-assembled"); }, 2600));
+      finaleTimers.push(setTimeout(function () { layer.classList.add("fn-china-show"); }, 3050));
+      finaleTimers.push(setTimeout(function () { layer.classList.add("fn-result-show"); }, 4300));
+    }
   }
+
+  function renderRank(list) {
+    var box = el("rankList");
+    if (!box) return;
+    var p = FunStore.get();
+    if (!list || !list.length) { box.innerHTML = '<p class="rank-empty">暂无其他玩家记录</p>'; return; }
+    box.innerHTML = list.map(function (rp, i) {
+      var me = p && rp.account === p.account;
+      return '<div class="rank-row' + (me ? " me" : "") + '">' +
+        '<span class="rank-no">' + (i + 1) + "</span>" +
+        '<span class="rank-name">' + escapeHtml(rp.nick) + (me ? " （你）" : "") + "</span>" +
+        '<span class="rank-time">⏱ ' + FunStore.fmtTime(rp.completedMs) + "</span>" +
+        "</div>";
+    }).join("");
+  }
+
+  function clearFooterTimer() { if (footerTimer) { clearInterval(footerTimer); footerTimer = null; } }
 
   /* ================= 地图碎片图鉴 ================= */
   function showFragments() {
     var p = FunStore.get();
     var fragTotal = CONFIG.FRAGMENTS_TOTAL;
     var got = p ? p.fragments : 0;
-    var layer = ensureLayer("fragGallery", "campaign-layer");
     var cells = "";
     for (var i = 0; i < FRAGMENTS.length; i++) {
-      var f = FRAGMENTS[i];
+      var r = FRAGMENTS[i];
       var unlocked = (i < got);
-      cells += '<div class="fg-cell' + (unlocked ? " on" : "") + '"' +
-        (unlocked ? ' style="background-image:' + fragCrop(i) + ';background-size:cover;"' : "") + ">" +
+      cells += '<div class="fg-cell' + (unlocked ? " on" : "") + '" title="' + r.name + '">' +
+        '<div class="fg-shape">' + (unlocked ? fragSvg(r, "fg-svg") : '<span class="fg-lock">🔒</span>') + "</div>" +
         '<span class="fg-num">' + (i + 1) + "</span>" +
-        '<span class="fg-name">' + (unlocked ? f.name : "未解锁") + "</span>" +
+        '<span class="fg-name">' + (unlocked ? r.name : "未解锁") + "</span>" +
+        (unlocked ? '<span class="fg-kind">' + r.type + "</span>" : "") +
       "</div>";
     }
+    var layer = ensureLayer("fragGallery", "campaign-layer");
     layer.innerHTML =
       '<div class="campaign-card frag-gallery-card">' +
         '<div class="obj-badge">🧩</div>' +
-        "<h2>地图碎片图鉴</h2>" +
-        '<p class="obj-lead">已集齐 <b>' + got + ' / ' + fragTotal + '</b> 片中国地图碎片。每收集 10 张人物卡牌自动合成 1 片，集齐 ' + fragTotal + ' 片即可拼出完整中国地图！</p>' +
+        "<h2>省级地图碎片图鉴</h2>" +
+        '<p class="obj-lead">已集齐 <b>' + got + " / " + fragTotal +
+          "</b> 片，对应全国 34 个省级行政区（23 省 · 5 自治区 · 4 直辖市 · 2 特别行政区）。每收集 10 张人物卡牌自动合成 1 片，碎片形状为真实行政区划轮廓。</p>" +
         '<div class="fg-grid">' + cells + "</div>" +
-        (got >= fragTotal ? '<button id="fgPuzzle" class="btn login-btn">🔓 拼出中国地图 ▶</button>' : "") +
+        '<p class="fg-note">台湾省、香港特别行政区、澳门特别行政区及南海诸岛均为中国领土不可分割的部分。</p>' +
+        (got >= fragTotal ? '<button id="fgPuzzle" class="btn login-btn">🔓 观看最终拼图 ▶</button>' : "") +
         '<button id="fgClose" class="btn ghost">关闭</button>' +
       "</div>";
     layer.classList.remove("hidden");
@@ -465,30 +445,32 @@
     return l;
   }
   function hideAll() {
-    ["loginLayer", "objLayer", "fragModal", "puzzleLayer", "settleLayer"].forEach(function (id) {
+    ["loginLayer", "objLayer", "fragModal", "puzzleLayer", "finaleLayer", "settleLayer", "fragGallery"].forEach(function (id) {
       var l = el(id); if (l) l.classList.add("hidden");
     });
     var f = el("campFooter"); if (f) f.classList.add("hidden");
   }
   function escapeHtml(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
       return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
     });
   }
 
   /* ================= 启动 ================= */
   function init() {
-    // 带 ?reset=1 打开：强制退出当前登录，回到昵称录入门（用于"重新开始录入昵称"）
-    if (/[?&]reset=1\b/.test(location.search)) {
-      FunStore.logout();
-    }
+    if (/[?&]reset=1\b/.test(location.search)) FunStore.logout();
     if (FunStore.get()) {
-      // 已登录（刷新页面等情况）：后台拉取云端最新档案，避免刷新后看到另一台设备的旧进度
       if (FunStore.syncPull) FunStore.syncPull(FunStore.get().account);
       FunStore.startClock();
       FunStore.tickDaily();
-      if (!FunStore.get().completed) { startFooter(); FunStore.markPlaying(true); if (window.FunUI) { FunUI.go("home"); FunUI.renderAccount(); } }
-      else { showSettlement(); }
+      var p = FunStore.get();   // get() 内的 normalize 已把「旧版 20 片已通关」的档恢复为进行中
+      if (p.completed) { showSettlement(); }
+      else {
+        startFooter();
+        FunStore.markPlaying(true);
+        if (window.FunUI) { FunUI.go("home"); FunUI.renderAccount(); }
+        if (p.fragments >= CONFIG.FRAGMENTS_TOTAL) openPuzzle();
+      }
     } else {
       showLogin();
     }
@@ -510,6 +492,7 @@
     quitToLogin: function () { FunStore.logout(); showLogin(); },
     award: award,
     openPuzzle: openPuzzle,
+    showSettlement: showSettlement,
     refreshFooter: refreshFooter,
     showObjectives: showObjectives,
     showFragments: showFragments

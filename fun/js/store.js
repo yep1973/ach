@@ -30,8 +30,8 @@
     collector: { name: "收藏家",   desc: "集齐 10 位人物卡", icon: "🃏" },
     streak3:   { name: "持之以恒", desc: "连续打卡 3 天",   icon: "🔥" },
     theater:   { name: "剧情大师", desc: "完成一次穿越剧场", icon: "🎭" },
-    pioneer:   { name: "九州绘成", desc: "集齐 20 片中国地图碎片", icon: "🧩" },
-    conqueror: { name: "一统江山", desc: "完成中国地图拼图，通关！", icon: "👑" }
+    pioneer:   { name: "九州绘成", desc: "集齐 34 片省级地图碎片", icon: "🧩" },
+    conqueror: { name: "一统江山", desc: "34 片汇成中国地图，通关！", icon: "👑" }
   };
 
   /* ---------------- 持久化 ---------------- */
@@ -169,6 +169,7 @@
 
     p.lastTick = Date.now();      // 重置心跳戳：离线时长不计入
     p.lastActive = Date.now();
+    applyGoalRule(p);             // 合并后仍须遵守 34 片新目标
     box.players[account] = p;
     saveLocal();                  // 只写本地，不回推，避免同步环
     notifySynced();
@@ -248,7 +249,7 @@
       theaterBest: {},              // scenarioId -> grade
       cards: [],                    // 每张掉落卡 {id,name,role,dynasty,source,ts}（可重复）
       modCards: { quiz: 0, drag: 0, theater: 0, clue: 0 }, // 各模块已产卡数（受上限约束）
-      fragments: 0,                 // 0..20
+      fragments: 0,                 // 0..34（34 个省级行政区）
       fragShown: 0,                 // 已展示过阶段提醒的碎片数
       introSeen: false,             // 是否看过游戏目标
       clueUsed: [],                 // 线索推理：本轮已出过的提示 id（跨设备同步）
@@ -260,6 +261,16 @@
       completedMs: null,
       lastActive: Date.now()
     };
+  }
+
+  // 终极目标：34 片省级地图碎片。旧版 20 片即通关的存档在新规则下继续挑战。
+  var GOAL_FRAGMENTS = 34;
+  function applyGoalRule(p) {
+    if (p.completed && (Number(p.fragments) || 0) < GOAL_FRAGMENTS) {
+      p.completed = false;
+      p.completedMs = null;
+    }
+    return p;
   }
 
   // 将任意（可能是旧版本遗留的）存档对象补全为标准 profile，
@@ -282,7 +293,7 @@
     if (!p.badges || typeof p.badges !== "object") p.badges = {};
     if (!p.theaterBest || typeof p.theaterBest !== "object") p.theaterBest = {};
     if (!Array.isArray(p.reviews)) p.reviews = [];
-    return p;
+    return applyGoalRule(p);
   }
 
   /* ---------------- 等级 / 经验 ---------------- */
@@ -350,15 +361,16 @@
     return { id: n.id, name: n.name, role: n.role || "", dynasty: n.dynasty };
   }
 
-  // 核心发卡：受「模块上限」与「全局 200 上限」双重约束
+  // 核心发卡：受「模块上限」与「全局 340 卡上限」双重约束
   // 返回 { awarded, cards:[...], fragGained, capHit, globalHit }
   function awardCards(module, count, dynId, opts) {
     opts = opts || {};
     var p = cur();
-    var CAP = (window.FunCampaign && window.FunCampaign.CONFIG && window.FunCampaign.CONFIG.MODULE_CAPS) || { quiz: 90, drag: 60, theater: 50 };
-    var TOTAL_FRAG = (window.FunCampaign && window.FunCampaign.CONFIG && window.FunCampaign.CONFIG.FRAGMENTS_TOTAL) || 20;
+    var CAP = (window.FunCampaign && window.FunCampaign.CONFIG && window.FunCampaign.CONFIG.MODULE_CAPS) ||
+      { quiz: 100, drag: 120, theater: 60, clue: 60 };
+    var TOTAL_FRAG = (window.FunCampaign && window.FunCampaign.CONFIG && window.FunCampaign.CONFIG.FRAGMENTS_TOTAL) || 34;
     var PER = (window.FunCampaign && window.FunCampaign.CONFIG && window.FunCampaign.CONFIG.CARDS_PER_FRAGMENT) || 10;
-    var globalMax = TOTAL_FRAG * PER;          // 200
+    var globalMax = TOTAL_FRAG * PER;          // 340
     var out = { awarded: 0, cards: [], fragGained: 0, capHit: false, globalHit: false };
     if (p.completed) return out;
 
@@ -379,8 +391,8 @@
       out.cards.push(picked);
       out.awarded++;
     }
-    // 碎片合成
-    var newFrag = Math.min(TOTAL_FRAG, Math.floor(p.cards.length / PER));
+    // 碎片合成：云端合并可能让卡牌数组变短，碎片只增不减，避免进度回退
+    var newFrag = Math.max(p.fragments, Math.min(TOTAL_FRAG, Math.floor(p.cards.length / PER)));
     out.fragGained = newFrag - p.fragments;
     p.fragments = newFrag;
     if (p.fragments >= TOTAL_FRAG) award("pioneer");
@@ -551,10 +563,11 @@
 
   function markIntroSeen() { var p = current(); if (p) { p.introSeen = true; saveAll(); } }
 
-  // 排名：已完成玩家按总时长升序（越快越靠前）
+  // 排名：按新目标（34 片）已通关玩家，按总时长升序（越快越靠前）
   function ranking() {
-    return listPlayers().filter(function (p) { return p.completed; })
-      .sort(function (a, b) { return (a.completedMs || 1e15) - (b.completedMs || 1e15); });
+    return listPlayers().filter(function (p) {
+      return p.completed && (Number(p.fragments) || 0) >= GOAL_FRAGMENTS;
+    }).sort(function (a, b) { return (a.completedMs || 1e15) - (b.completedMs || 1e15); });
   }
 
   function fmtTime(ms) {

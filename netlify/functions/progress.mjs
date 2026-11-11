@@ -11,6 +11,17 @@ import { getStore } from "@netlify/blobs";
 const STORE_NAME = "history-fun";
 const PREFIX = "player:";
 const GRADE = { S: 4, A: 3, B: 2, C: 1 };
+// 终极目标：34 片省级行政区地图碎片（旧版为 20 片）
+const GOAL_FRAGMENTS = 34;
+
+// 目标升级后，碎片不足的旧「已通关」存档一律回到进行中
+function applyGoalRule(p) {
+  if (p.completed && num(p.fragments) < GOAL_FRAGMENTS) {
+    p.completed = false;
+    p.completedMs = null;
+  }
+  return p;
+}
 
 function reply(data, status) {
   return new Response(JSON.stringify(data), {
@@ -219,7 +230,7 @@ export default async function (req) {
 
     const inc = sanitize(acc, data.profile);
     const old = await s.get(PREFIX + acc, { type: "json", consistency: "strong" });
-    const merged = merge(old, inc);
+    const merged = applyGoalRule(merge(old, inc));
     await s.setJSON(PREFIX + acc, merged);
     return reply({ ok: true, profile: merged });
   }
