@@ -386,10 +386,24 @@ h1, h2, h3 { font-family: var(--kai); letter-spacing: .5px; }
 .tl-grip { color: #cbb89f; font-size: 18px; margin-left: auto; }
 
 /* 连连看 */
-.lk-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+/* 双列由 .lk-cols 负责；此处若再设 grid，内容会被挤到 1/4 宽 */
+.lk-board { display: block; }
+.link-types { display: flex; gap: 8px; flex-wrap: wrap; margin: 2px 0 12px; }
+.lt-btn {
+  background: var(--card); border: 2px solid #e7d8bf; border-radius: 999px;
+  padding: 7px 15px; font-size: 13px; font-family: var(--serif); color: var(--ink);
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.lt-btn:hover { border-color: var(--coral); }
+.lt-btn.active { background: var(--teal); border-color: var(--teal); color: #fff; }
+.lk-intro {
+  background: #f6efe1; border-left: 3px solid var(--gold);
+  border-radius: 8px; padding: 10px 12px; line-height: 1.7; color: var(--ink);
+}
 .lk-card {
   background: #fff; border: 2px solid #f0e3d2; border-radius: 14px;
-  padding: 14px 10px; text-align: center; cursor: pointer; font-size: 14px;
+  padding: 12px 10px; text-align: center; cursor: pointer; font-size: 14px;
+  line-height: 1.45; word-break: break-word;
   min-height: 64px; display: flex; align-items: center; justify-content: center;
   transition: transform .12s, border-color .15s, background .15s;
 }
@@ -577,7 +591,9 @@ h1, h2, h3 { font-family: var(--kai); letter-spacing: .5px; }
 .hidden { display: none !important; }
 
 @media (max-width: 640px) {
-  .lk-board { grid-template-columns: repeat(3, 1fr); }
+  .lk-cols { gap: 10px; }
+  .lk-card { font-size: 13px; padding: 10px 7px; min-height: 58px; }
+  .lt-btn { padding: 6px 11px; font-size: 12px; }
   .pz-board { width: 300px; height: 300px; }
   .pz-tile { background-size: 300px 300px; }
   .hud { width: 100%; justify-content: space-between; }

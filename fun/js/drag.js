@@ -1,6 +1,6 @@
 /* ============================================================
    趣味历史乐园 · 拖拽互动馆
-   1) 时间轴排序  2) 连连看（朝代↔都城）  3) 地图拼图（SVG 九宫格）
+   1) 时间轴排序  2) 连连看（4 种题型·不重复出题）  3) 地图拼图（SVG 九宫格）
    统一交互：清晰规则 + 提交/检查按钮 + 即时对错反馈 + 换下一张。
    ============================================================ */
 (function () {
@@ -17,6 +17,62 @@
   }
 
   var SUB = "sort"; // sort | link | puzzle
+
+  /* ---- 连连看：题型选择 + 去重出题状态 ---- */
+  var LINK_TYPE = "mix";                  // mix | capital | figure | deed | event
+  var LINK_LAST_TYPE = "";                // 混合模式下避免连续两批同题型
+  var LINK_STATE_KEY = "fun_link_state_v1";
+  var linkState = { seen: {}, last: {} }; // seen: 本轮已出题；last: 上一批题目（新一轮时排除）
+
+  function loadLinkState() {
+    try {
+      var o = JSON.parse(localStorage.getItem(LINK_STATE_KEY));
+      if (o && o.seen && o.last) linkState = o;
+    } catch (e) { linkState = { seen: {}, last: {} }; }
+  }
+  function saveLinkState() {
+    try { localStorage.setItem(LINK_STATE_KEY, JSON.stringify(linkState)); } catch (e) {}
+  }
+  function linkTypes() {
+    return (window.FunLinkData && FunLinkData.types) ? FunLinkData.types : [];
+  }
+  function linkTypeById(id) {
+    var ts = linkTypes();
+    for (var i = 0; i < ts.length; i++) if (ts[i].id === id) return ts[i];
+    return ts[0] || null;
+  }
+  function chooseLinkType() {
+    var ts = linkTypes();
+    if (!ts.length) return null;
+    if (LINK_TYPE !== "mix") return linkTypeById(LINK_TYPE);
+    var pool = ts.filter(function (t) { return t.id !== LINK_LAST_TYPE; });
+    if (!pool.length) pool = ts;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
+  // 抽一批：只从「本轮未出过」的题里取；题目用尽自动开新一轮（并排除上一批）
+  // 同时做同批左右文本二次去重，确保一局内绝不出现重复题目/选项
+  function nextLinkBatch(type, n) {
+    var seen = linkState.seen[type.id] || [];
+    var last = linkState.last[type.id] || [];
+    var avail = type.pairs.filter(function (p) { return seen.indexOf(p.id) < 0; });
+    if (avail.length < n) {
+      seen = [];
+      avail = type.pairs.filter(function (p) { return last.indexOf(p.id) < 0; });
+      if (avail.length < n) avail = type.pairs.slice();
+    }
+    var count = Math.min(n, avail.length);
+    var pool = shuffle(avail), picked = [], useL = {}, useR = {};
+    for (var i = 0; i < pool.length && picked.length < count; i++) {
+      var p = pool[i];
+      if (useL[p.l] || useR[p.r]) continue;   // 同批内左项/右项文本不得重复
+      useL[p.l] = useR[p.r] = true;
+      picked.push(p);
+    }
+    linkState.seen[type.id] = seen.concat(picked.map(function (p) { return p.id; }));
+    linkState.last[type.id] = picked.map(function (p) { return p.id; });
+    saveLinkState();
+    return picked;
+  }
 
   function open() {
     var root = el("view-drag");
@@ -169,37 +225,61 @@
     draw();
   }
 
-  /* ---------------- 连连看（朝代 ↔ 都城） ---------------- */
+  /* ---------------- 连连看（4 种题型 · 不重复出题） ---------------- */
   function renderLink() {
     var body = el("dragBody");
+    var ts = linkTypes();
+    if (!ts.length) { body.innerHTML = "<p>题库未加载，请刷新页面重试～</p>"; return; }
+    loadLinkState();
+
+    var tabs = '<button class="lt-btn' + (LINK_TYPE === "mix" ? " active" : "") + '" data-lt="mix">🎲 全部混合</button>' +
+      ts.map(function (t) {
+        return '<button class="lt-btn' + (LINK_TYPE === t.id ? " active" : "") + '" data-lt="' + t.id + '">' + t.name + "</button>";
+      }).join("");
+
     body.innerHTML =
-      '<div class="tl-intro">🔗 <b>玩法：</b>系统会从全部朝代随机抽取若干个，左边是「朝代」，右边是「都城/中心」。在两边各点一张：若是同一朝代的搭配，就配对成功（绿）；若不对，会闪红提示。配完所有对子即过关。</div>' +
+      '<div class="tl-intro">🔗 <b>玩法：</b>在两边各点一张，配对正确变绿、配错闪红，配完这一批即过关。' +
+        '<b>同一批内不会出现重复题目或选项</b>；已经出过的题会先跳过，直到该题型全部轮完才重新开一轮。</div>' +
+      '<div class="link-types" id="linkTypes">' + tabs + "</div>" +
+      '<div class="tl-intro lk-intro" id="linkIntro"></div>' +
       '<div class="quiz-actions"><button class="btn" id="linkNew">换一批</button></div>' +
       '<div id="linkBoard" class="lk-board"></div>';
+
+    body.querySelectorAll("#linkTypes .lt-btn").forEach(function (b) {
+      b.onclick = function () {
+        LINK_TYPE = b.getAttribute("data-lt");
+        body.querySelectorAll("#linkTypes .lt-btn").forEach(function (x) { x.classList.remove("active"); });
+        b.classList.add("active");
+        playLink();
+      };
+    });
     el("linkNew").onclick = playLink;
     playLink();
   }
 
   function playLink() {
     var board = el("linkBoard");
-    var cands = FunData.dynasties.filter(function (dd) {
-      return dd.capital && dd.capital.indexOf("无") !== 0 && dd.capital.length < 14;
-    });
-    var pick = shuffle(cands).slice(0, 5);
+    var type = chooseLinkType();
+    if (!type || !type.pairs.length) { board.innerHTML = "<p>题库暂不可用，请刷新页面重试～</p>"; return; }
+    LINK_LAST_TYPE = type.id;
+    var pick = nextLinkBatch(type, 5);
     var total = pick.length;
     var matched = 0, selL = null, selR = null;
 
+    var intro = el("linkIntro");
+    if (intro) intro.innerHTML = '📌 <b>本批题型：' + type.name + '</b>（' + type.left + ' ↔ ' + type.right + '）　' + type.intro;
+
     board.innerHTML =
       '<div class="lk-cols">' +
-        '<div class="lk-col"><div class="lk-col-title">朝代</div><div id="lkL" class="lk-col-body"></div></div>' +
-        '<div class="lk-col"><div class="lk-col-title">都城 / 中心</div><div id="lkR" class="lk-col-body"></div></div>' +
+        '<div class="lk-col"><div class="lk-col-title">' + type.left + '</div><div id="lkL" class="lk-col-body"></div></div>' +
+        '<div class="lk-col"><div class="lk-col-title">' + type.right + '</div><div id="lkR" class="lk-col-body"></div></div>' +
       "</div>" +
       '<div class="lk-progress" id="lkProg">已配对 0 / ' + total + "</div>";
 
     var lkL = board.querySelector("#lkL"), lkR = board.querySelector("#lkR");
 
-    shuffle(pick.slice()).forEach(function (dd) { makeCard(dd.short, "d", dd.id, lkL); });
-    shuffle(pick.slice()).forEach(function (dd) { makeCard(dd.capital, "c", dd.id, lkR); });
+    shuffle(pick.slice()).forEach(function (pp) { makeCard(pp.l, "d", pp.id, lkL); });
+    shuffle(pick.slice()).forEach(function (pp) { makeCard(pp.r, "c", pp.id, lkR); });
 
     function makeCard(text, kind, pid, col) {
       var div = document.createElement("div");
@@ -241,7 +321,7 @@
     function winLink(p) {
       FunStore.addXp(25);
       FunUI.award("matcher");
-      var res = (window.FunCampaign ? FunCampaign.award("drag", FunCampaign.CONFIG.DRAG_GAME_CARDS.link, p[0].id) : { awarded: 0, cards: [] });
+      var res = (window.FunCampaign ? FunCampaign.award("drag", FunCampaign.CONFIG.DRAG_GAME_CARDS.link, p[0].d) : { awarded: 0, cards: [] });
       var cardNames = res.cards.map(function (c) { return c.name; }).join("、");
       var msg = document.createElement("div");
       msg.className = "feedback ok";
