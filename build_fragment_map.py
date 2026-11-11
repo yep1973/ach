@@ -130,7 +130,10 @@ def rdp(points, eps):
 
 
 def fmt(v):
-    s = "%.1f" % v
+    # 2 位小数：港澳等微型行政区在碎片图鉴里会被放大数十倍，需要足够坐标精度
+    s = "%.2f" % v
+    if s.endswith("0"):
+        s = s[:-1]
     if s.endswith(".0"):
         s = s[:-2]
     return s
@@ -229,11 +232,13 @@ def main():
         all_ring_pts = [p for ring in out_rings for p in ring]
         bx0, by0 = min(p[0] for p in all_ring_pts), min(p[1] for p in all_ring_pts)
         bx1, by1 = max(p[0] for p in all_ring_pts), max(p[1] for p in all_ring_pts)
-        # 单块碎片展示用的放大取景框（保证最小可视尺寸，避免港澳只剩 1 像素）
-        bw, bh = bx1 - bx0, by1 - by0
-        mw, mh = max(bw, 90.0), max(bh, 90.0)
-        box = [round((bx0 + bx1) / 2 - mw / 2, 1), round((by0 + by1) / 2 - mh / 2, 1),
-               round(mw, 1), round(mh, 1)]
+        # 单块碎片展示用的放大取景框：紧贴轮廓 + 8% 留白。
+        # 不设「最小边长」——viewBox 越小，SVG 放大倍数越大，港澳沪京津才看得清真实形状。
+        bw, bh = max(bx1 - bx0, 0.05), max(by1 - by0, 0.05)
+        PAD = 1.16
+        mw, mh = round(bw * PAD, 2), round(bh * PAD, 2)
+        box = [round((bx0 + bx1) / 2 - mw / 2, 2), round((by0 + by1) / 2 - mh / 2, 2),
+               mw, mh]
         regions.append({
             "id": "r" + code,
             "adcode": code,

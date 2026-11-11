@@ -56,12 +56,13 @@
   // 单块碎片：按该行政区的真实取景框放大显示（阶段弹窗 / 图鉴共用）
   function fragSvg(r, cls) {
     var b = r.box || [0, 0, VB[2], VB[3]];
-    var sw = Math.max(0.9, (b[2] / 110) * 1.6);
+    // 描边随取景框等比缩放：港澳等微型行政区放大后线条不能糊成一团
+    var sw = Math.max(0.004, (b[2] / 110) * 1.6);
     if (!r.path) return '<div class="frag-fallback">' + r.short + "</div>";
     return '<svg class="' + (cls || "") + '" viewBox="' + b.join(" ") + '" ' +
       'preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" aria-label="' + r.name + '">' +
       '<path d="' + r.path + '" fill="' + r.color + '" stroke="#7e3b2c" stroke-width="' +
-      sw.toFixed(2) + '" stroke-linejoin="round" fill-rule="evenodd"/>' +
+      sw.toFixed(3) + '" stroke-linejoin="round" fill-rule="evenodd"/>' +
       "</svg>";
   }
   function vbStr() { return VB.join(" "); }
