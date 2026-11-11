@@ -481,7 +481,7 @@
   function setView(view) {
     var p = FunStore.get();
     if (!p) return;
-    var playing = (view === "home" || view === "quiz" || view === "clue" || view === "drag" || view === "hall" || view === "theater");
+    var playing = (view === "home" || view === "quiz" || view === "clue" || view === "drag" || view === "theater" || view === "hall" || view === "review");
     FunStore.markPlaying(playing && !p.completed);
   }
 

@@ -69,7 +69,7 @@
     return {
       account: p.account, nick: p.nick, createdAt: p.createdAt,
       xp: p.xp, streak: p.streak, lastDay: p.lastDay,
-      badges: p.badges || {}, reviews: p.reviews || [],
+      badges: p.badges || {}, reviews: p.reviews || [], reviewRemoved: p.reviewRemoved || [],
       theaterBest: p.theaterBest || {}, cards: p.cards || [],
       modCards: p.modCards || {}, fragments: p.fragments,
       fragShown: p.fragShown, introSeen: p.introSeen,
@@ -126,6 +126,37 @@
       firstTry: maxN(a.firstTry, b.firstTry)
     };
   }
+  // 错题本：字符串并集 / 按题干合并（错误次数取较大值）/ 剔除「已掌握」墓碑
+  function unionStrings(a, b) {
+    var out = [], seen = {};
+    (a || []).concat(b || []).forEach(function (x) {
+      var s = String(x || "").slice(0, 200);
+      if (s && !seen[s]) { seen[s] = 1; out.push(s); }
+    });
+    return out.slice(-400);
+  }
+  function tombSet(removed) {
+    var m = {};
+    (removed || []).forEach(function (q) { m[q] = 1; });
+    return m;
+  }
+  function mergeReviewArrays(a, b, tombs) {
+    var map = {}, order = [];
+    (a || []).concat(b || []).forEach(function (r) {
+      if (!r || !r.q || tombs[r.q]) return;
+      var q = String(r.q).slice(0, 200);
+      if (!map[q]) { map[q] = Object.assign({}, r); order.push(q); }
+      else {
+        var old = map[q];
+        if (Number(r.wrong) > Number(old.wrong)) map[q] = Object.assign({}, old, r);
+        else map[q] = Object.assign({}, r, old);
+      }
+    });
+    return order.map(function (q) { return map[q]; }).slice(0, 200);
+  }
+  function filterReviews(list, tombs) {
+    return (list || []).filter(function (r) { return r && r.q && !tombs[r.q]; });
+  }
   function minMs2(a, b) {
     if (a == null) return b;
     if (b == null) return a;
@@ -155,7 +186,7 @@
       p.completedMs = minMs2(local.completedMs, p.completedMs);
       p.badges = Object.assign({}, p.badges || {}, local.badges || {});
       p.theaterBest = Object.assign({}, p.theaterBest || {}, local.theaterBest || {});
-      p.reviews = ((local.reviews || []).length > (p.reviews || []).length) ? local.reviews : p.reviews;
+      // 错题本在下方按「已掌握」墓碑统一合并，避免已清除的错题被云端恢复
       p.cards = mergeCardArrays(p.cards, local.cards);
       p.clueUsed = unionClues(p.clueUsed, local.clueUsed);
       p.clueStats = unionClueStats(p.clueStats, local.clueStats);
@@ -166,6 +197,13 @@
       };
       p.playing = !!local.playing;
     }
+
+    // 错题本：两端合并后剔除「已掌握」墓碑，保证清除动作跨设备生效
+    p.reviewRemoved = unionStrings(local ? local.reviewRemoved : [], p.reviewRemoved);
+    var tombs = tombSet(p.reviewRemoved);
+    p.reviews = (!local || strict)
+      ? filterReviews(p.reviews, tombs)
+      : mergeReviewArrays(local.reviews, p.reviews, tombs);
 
     p.lastTick = Date.now();      // 重置心跳戳：离线时长不计入
     p.lastActive = Date.now();
@@ -245,7 +283,8 @@
       streak: 0,
       lastDay: "",
       badges: {},
-      reviews: [],
+      reviews: [],                  // 错题本：答错的题目集中复习
+      reviewRemoved: [],            // 已标记「已掌握」的题干墓碑（防止云端合并把清除的错题恢复）
       theaterBest: {},              // scenarioId -> grade
       cards: [],                    // 每张掉落卡 {id,name,role,dynasty,source,ts}（可重复）
       modCards: { quiz: 0, drag: 0, theater: 0, clue: 0 }, // 各模块已产卡数（受上限约束）
@@ -293,6 +332,7 @@
     if (!p.badges || typeof p.badges !== "object") p.badges = {};
     if (!p.theaterBest || typeof p.theaterBest !== "object") p.theaterBest = {};
     if (!Array.isArray(p.reviews)) p.reviews = [];
+    if (!Array.isArray(p.reviewRemoved)) p.reviewRemoved = [];
     return applyGoalRule(p);
   }
 
@@ -345,20 +385,45 @@
   }
   function cardCount() { return uniqueCards().length; }
 
-  // 优先抽到尚未拥有的独特人物，集满图鉴；否则随机（允许重复，仍计入碎片）
-  function pickCard(dynId, preferId) {
+  // 抽卡规则：一次发放的 N 张卡必须是 N 个不同人物；优先补全局尚未拥有的图鉴人物。
+  // exclude 为本批已抽到的 id 集合；preferId（如线索推理猜中的人物）只用于第一张。
+  function toCard(n) {
+    return {
+      id: n.id, name: n.name, role: n.role || "",
+      dynasty: n.dynasty || "", dynastyId: n.dynastyId || ""
+    };
+  }
+  function pickCard(dynId, preferId, exclude) {
     var D = window.FunData;
-    var ns = D ? D.notablesOf(dynId) : [];
-    if (!ns.length) return null;
-    if (preferId) {
-      for (var i = 0; i < ns.length; i++) if (ns[i].id === preferId) return ns[i];
-    }
+    if (!D) return null;
+    var ns = D.notablesOf(dynId) || [];
+    var all = D.allNotables ? D.allNotables() : ns;
+    // 当前朝代优先，再用全库补齐：保证一次发 3~5 张时不会因某朝代人少而抽到重复
+    var seen = {}, pool = [];
+    ns.concat(all).forEach(function (n) {
+      if (n && n.id && !seen[n.id]) { seen[n.id] = 1; pool.push(n); }
+    });
+    if (!pool.length) return null;
+
+    exclude = exclude || {};
     var owned = {};
-    cur().cards.forEach(function (c) { owned[c.id] = 1; });
-    var fresh = ns.filter(function (n) { return !owned[n.id]; });
-    var pool = fresh.length ? fresh : ns;
-    var n = pool[Math.floor(Math.random() * pool.length)];
-    return { id: n.id, name: n.name, role: n.role || "", dynasty: n.dynasty };
+    cur().cards.forEach(function (c) { owned[c.id] = (owned[c.id] || 0) + 1; });
+
+    if (preferId && !exclude[preferId]) {
+      for (var i = 0; i < pool.length; i++) {
+        if (pool[i].id === preferId) return toCard(pool[i]);
+      }
+    }
+    var cand = pool.filter(function (n) { return !exclude[n.id]; });
+    if (!cand.length) return null;
+    var fresh = cand.filter(function (n) { return !owned[n.id]; });
+    var base = fresh.length ? fresh : cand;
+    if (!fresh.length) {
+      // 图鉴集齐后也必须批内不重复：优先拥有张数最少的人物，让重复尽量均匀
+      var min = Math.min.apply(null, base.map(function (n) { return owned[n.id] || 0; }));
+      base = base.filter(function (n) { return (owned[n.id] || 0) === min; });
+    }
+    return toCard(base[Math.floor(Math.random() * base.length)]);
   }
 
   // 核心发卡：受「模块上限」与「全局 340 卡上限」双重约束
@@ -381,9 +446,11 @@
       if (room <= 0) out.globalHit = true; else out.capHit = true;
       return out;
     }
+    var batch = {};                        // 本批已发人物，保证一张卡对应一个人物、批内不重复
     for (var k = 0; k < can; k++) {
-      var picked = pickCard(dynId, opts.preferId);
+      var picked = pickCard(dynId, k === 0 ? opts.preferId : null, batch);
       if (!picked) break;
+      batch[picked.id] = 1;
       picked.source = module;
       picked.ts = Date.now();
       p.cards.push(picked);
@@ -413,26 +480,76 @@
     return true;
   }
 
-  /* ---------------- 间隔复习 ---------------- */
+  /* ---------------- 间隔复习 / 错题本 ---------------- */
+  function dayKey(d) {
+    return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2);
+  }
+  function answerText(a) {
+    if (typeof a === "boolean") return a ? "正确" : "错误";
+    if (Array.isArray(a)) return a.join("、");
+    return a == null ? "" : String(a);
+  }
+  // 各玩法统一调用：{ q 题干, a 正确答案, source 来源, note 补充说明 }
   function addReview(item) {
+    if (!item || !item.q) return;
     var p = cur();
-    var exist = p.reviews.filter(function (r) { return r.q === item.q; })[0];
-    var due = todayStr();
-    if (exist) { exist.wrong += 1; exist.due = due; }
-    else p.reviews.push({ q: item.q, a: item.a, due: due, wrong: 1 });
+    var q = String(item.q).slice(0, 180);
+    var ans = answerText(item.a).slice(0, 180);
+    var now = Date.now(), due = dayKey(new Date());
+    // 之前标记过「已掌握」的题又答错了：撤销墓碑，重新进入错题本
+    p.reviewRemoved = (p.reviewRemoved || []).filter(function (x) { return x !== q; });
+    var exist = null;
+    p.reviews.forEach(function (r) { if (r.q === q) exist = r; });
+    if (exist) {
+      exist.wrong = (Number(exist.wrong) || 0) + 1;
+      exist.due = due; exist.lastWrongAt = now;
+      if (ans) exist.a = ans;
+      if (item.source) exist.source = item.source;
+      if (item.note) exist.note = String(item.note).slice(0, 200);
+    } else {
+      p.reviews.push({
+        q: q, a: ans, due: due, wrong: 1,
+        source: item.source || "闯关答题",
+        note: String(item.note || "").slice(0, 200),
+        addedAt: now, lastWrongAt: now
+      });
+    }
     saveAll();
   }
   function dueReviews() {
-    var t = todayStr();
-    return cur().reviews.filter(function (r) { return r.due <= t; });
+    var t = dayKey(new Date());
+    return cur().reviews.filter(function (r) { return (r.due || "") <= t; });
+  }
+  function allReviews() {
+    return cur().reviews.slice().sort(function (a, b) {
+      return (Number(b.lastWrongAt) || 0) - (Number(a.lastWrongAt) || 0);
+    });
   }
   function reviewDone(q) {
     var p = cur();
     var r = p.reviews.filter(function (x) { return x.q === q; })[0];
     if (!r) return;
     var d = new Date(); d.setDate(d.getDate() + 2);
-    r.due = d.getFullYear() + "-" + (d.getMonth() + 1) + "-" + d.getDate();
+    r.due = dayKey(d);
     saveAll();
+  }
+  // 「已掌握」：从错题本清除，并留下墓碑，保证手机 / 电脑同账号不会再出现
+  function masterReview(q) {
+    var p = cur();
+    var hit = p.reviews.some(function (r) { return r.q === q; });
+    p.reviews = p.reviews.filter(function (r) { return r.q !== q; });
+    if ((hit || q) && p.reviewRemoved.indexOf(q) < 0) p.reviewRemoved.push(q);
+    p.reviewRemoved = p.reviewRemoved.slice(-400);
+    flush();                       // 清除是关键动作，立即强推云端
+  }
+  function clearAllReviews() {
+    var p = cur();
+    p.reviews.forEach(function (r) {
+      if (p.reviewRemoved.indexOf(r.q) < 0) p.reviewRemoved.push(r.q);
+    });
+    p.reviews = [];
+    p.reviewRemoved = p.reviewRemoved.slice(-400);
+    flush();
   }
 
   /* ---------------- 穿越剧场 ---------------- */
@@ -597,7 +714,10 @@
     addCard: addCard,
     addReview: addReview,
     dueReviews: dueReviews,
+    allReviews: allReviews,
     reviewDone: reviewDone,
+    masterReview: masterReview,
+    clearAllReviews: clearAllReviews,
     theaterBest: theaterBest,
     theaterClear: theaterClear,
     startClock: startClock,

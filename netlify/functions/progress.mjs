@@ -88,6 +88,15 @@ function mergeReviews(a, b) {
   return Object.keys(map).slice(0, 200).map(function (k) { return map[k]; });
 }
 
+// 「已掌握」清除的题干墓碑：合并后的错题本必须排除这些题，否则清除动作会被另一端恢复
+function filterReviews(list, removed) {
+  const tombs = {};
+  arr(removed).forEach(function (q) { tombs[str(q, 200)] = 1; });
+  return arr(list).filter(function (r) {
+    return r && typeof r === "object" && r.q && !tombs[str(r.q, 200)];
+  }).slice(0, 200);
+}
+
 function mergeGrades(a, b) {
   const x = obj(a), y = obj(b), out = {};
   Object.keys(Object.assign({}, x, y)).slice(0, 200).forEach(function (k) {
@@ -120,6 +129,7 @@ function mergeClueStats(a, b) {
 function sanitize(account, raw) {
   const src = obj(raw);
   const mod = obj(src.modCards);
+  const removed = mergeClueUsed(src.reviewRemoved, []);
   return {
     account: account,
     nick: str(src.nick || account, 12),
@@ -128,7 +138,8 @@ function sanitize(account, raw) {
     streak: num(src.streak),
     lastDay: str(src.lastDay, 20),
     badges: obj(src.badges),
-    reviews: mergeReviews(src.reviews, []),
+    reviews: filterReviews(mergeReviews(src.reviews, []), removed),
+    reviewRemoved: removed,
     theaterBest: obj(src.theaterBest),
     cards: mergeCards(src.cards, []),
     modCards: { quiz: num(mod.quiz), drag: num(mod.drag), theater: num(mod.theater), clue: num(mod.clue) },
@@ -165,7 +176,8 @@ function merge(old, inc) {
   out.completedMs = minMs(old.completedMs, inc.completedMs);
   out.badges = Object.assign({}, obj(old.badges), obj(inc.badges));
   out.theaterBest = mergeGrades(old.theaterBest, inc.theaterBest);
-  out.reviews = mergeReviews(old.reviews, inc.reviews);
+  out.reviewRemoved = mergeClueUsed(old.reviewRemoved, inc.reviewRemoved);
+  out.reviews = filterReviews(mergeReviews(old.reviews, inc.reviews), out.reviewRemoved);
   out.cards = mergeCards(old.cards, inc.cards);
   out.clueUsed = mergeClueUsed(old.clueUsed, inc.clueUsed);
   out.clueStats = mergeClueStats(old.clueStats, inc.clueStats);

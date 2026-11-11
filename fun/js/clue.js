@@ -138,7 +138,18 @@
       }
       if (window.FunStore) FunStore.save();
     }
-    if (!win) { render(); return; }
+    if (!win) {
+      if (window.FunStore && FunStore.addReview) {
+        var lines = (Q.clues || []).map(function (c) { return c.text; });
+        FunStore.addReview({
+          q: "猜人物：" + (lines[0] || ""),
+          a: Q.person.name,
+          source: "线索推理",
+          note: lines.join("；")
+        });
+      }
+      render(); return;
+    }
 
     var n = reward(Q.shown);
     Q.gained = n;

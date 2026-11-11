@@ -316,7 +316,10 @@
       Q.combo = 0; Q.lives--; Q.wrong++;
       fb.innerHTML = "<b>答错了～</b> 正确答案已高亮。" +
         (q.explanation ? "<br>📖 " + q.explanation : "");
-      FunStore.addReview({ q: q.q, a: q.answer });
+      FunStore.addReview({
+        q: q.q, a: q.answer, source: "闯关答题",
+        note: (q.dynasty ? "【" + q.dynasty + "】" : "") + (q.explanation || "")
+      });
     }
     el("qCard").appendChild(fb);
     var sub = el("qSubmit"); if (sub) sub.classList.add("hidden");
@@ -333,6 +336,10 @@
     fb.innerHTML = "<b>时间到！⏰</b> 正确答案已高亮。" +
       (q.explanation ? "<br>📖 " + q.explanation : "");
     el("qCard").appendChild(fb);
+    FunStore.addReview({
+      q: q.q, a: q.answer, source: "闯关答题（超时）",
+      note: "时间到未作答。" + (q.dynasty ? "【" + q.dynasty + "】" : "") + (q.explanation || "")
+    });
     var sub = el("qSubmit"); if (sub) sub.classList.add("hidden");
     el("qNext").classList.remove("hidden");
     updateTop();

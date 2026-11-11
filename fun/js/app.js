@@ -44,7 +44,7 @@
       return false;
     },
     go: function (view) {
-      ["home", "quiz", "clue", "drag", "hall", "theater"].forEach(function (v) {
+      ["home", "quiz", "clue", "drag", "theater", "hall", "review"].forEach(function (v) {
         el("view-" + v).classList.toggle("hidden", v !== view);
       });
       el("mainnav").querySelectorAll(".nav-btn").forEach(function (b) {
@@ -53,8 +53,9 @@
       if (view === "quiz") FunQuiz.open();
       else if (view === "clue") FunClue.open();
       else if (view === "drag") FunDrag.open();
-      else if (view === "hall") FunHall.open();
       else if (view === "theater") FunTheater.open();
+      else if (view === "hall") FunHall.open();
+      else if (view === "review") FunReview.open();
       else if (view === "home") renderHome();
       window.scrollTo(0, 0);
       if (window.FunCampaign) FunCampaign.setView(view);
@@ -94,18 +95,18 @@
         '<div class="mc-ico">🎮</div><h3>拖拽互动馆</h3>' +
         '<span class="mc-tag">排序 · 连连看</span>' +
         '<p>把事件排回时间线、把人物与典故和朝代连起来，动手又动脑。</p></div>' +
+      '<div class="module-card mc-5" data-action="theater">' +
+        '<div class="mc-ico">🎭</div><h3>穿越剧场</h3>' +
+        '<span class="mc-tag">角色扮演 · 多结局</span>' +
+        '<p>穿越到商鞅变法、贞观朝堂、赤壁战场……做出你的抉择，左右历史走向，赢取结局评级与奖励。</p></div>' +
       '<div class="module-card mc-3" data-action="hall">' +
         '<div class="mc-ico">🃏</div><h3>历史藏馆</h3>' +
         '<span class="mc-tag">卡牌收集</span>' +
         '<p>通关和闯关会掉落历史人物卡牌，集齐属于你的中华历史图鉴（共 ' + totalNotes + " 位可收）。</p></div>" +
       '<div class="module-card mc-4" data-action="review">' +
         '<div class="mc-ico">📅</div><h3>间隔复习</h3>' +
-        '<span class="mc-tag">艾宾浩斯</span>' +
-        '<p>答错的题会自动进入复习队列，按遗忘曲线提醒你回头巩固，记得更牢。</p></div>' +
-      '<div class="module-card mc-5" data-action="theater">' +
-        '<div class="mc-ico">🎭</div><h3>穿越剧场</h3>' +
-        '<span class="mc-tag">角色扮演 · 多结局</span>' +
-        '<p>穿越到商鞅变法、贞观朝堂、赤壁战场……做出你的抉择，左右历史走向，赢取结局评级与奖励。</p></div>';
+        '<span class="mc-tag">错题本 · 已掌握</span>' +
+        '<p>答错的题自动收进错题本，可集中查看正确答案；记牢后点「已掌握」即可清除，没记住的按遗忘曲线再提醒。</p></div>';
 
     var review = renderReview();
 
@@ -122,69 +123,24 @@
       review;
 
     root.querySelectorAll(".module-card").forEach(function (c) {
-      c.onclick = function () {
-        var a = c.getAttribute("data-action");
-        if (a === "review") { location.hash = "#review"; renderHome(); window.scrollTo(0, document.getElementById("reviewBox").offsetTop - 80); }
-        else FunUI.go(a);
-      };
+      c.onclick = function () { FunUI.go(c.getAttribute("data-action")); };
     });
   }
 
-  /* ---------- 间隔复习区块 ---------- */
+  /* ---------- 首页：间隔复习入口摘要（完整错题本在独立板块） ---------- */
   function renderReview() {
-    var due = FunStore.dueReviews();
-    var body = "";
-    if (!due.length) {
-      body = '<p style="color:var(--ink-soft);font-size:14px;">🎉 暂时没有需要复习的题目，去闯关挑战自己吧！</p>';
-    } else {
-      body = due.map(function (r, i) {
-        var ans = formatAnswer(r.a);
-        return '<div class="panel" style="margin-bottom:10px;padding:14px;">' +
-          '<div style="font-weight:700;margin-bottom:8px;">' + (i + 1) + ". " + r.q + "</div>" +
-          '<div class="review-ans hidden" data-i="' + i + '" style="color:var(--teal);font-weight:700;margin-bottom:8px;">答案：' + ans + "</div>" +
-          '<div style="display:flex;gap:8px;">' +
-            '<button class="btn small" data-show="' + i + '">显示答案</button>' +
-            '<button class="btn small ghost" data-ok="' + i + '">记得 ✓</button>' +
-            '<button class="btn small ghost" data-no="' + i + '">忘了 ✗</button>' +
-          "</div></div>";
-      }).join("");
-    }
-    var html =
-      '<div id="reviewBox" style="margin-top:22px;">' +
-        '<div class="section-title">📅 间隔复习（' + due.length + " 条待巩固）</div>" +
-        '<div class="section-sub">这些是之前答错的题，按遗忘曲线安排复习，巩固记忆点。</div>' +
-        body +
-      "</div>";
-    // 绑定事件（在 innerHTML 设置后）
+    var all = FunStore.allReviews();
+    var due = FunStore.dueReviews().length;
     setTimeout(function () {
-      var box = el("reviewBox");
-      if (!box) return;
-      box.querySelectorAll("[data-show]").forEach(function (b) {
-        b.onclick = function () {
-          var i = b.getAttribute("data-show");
-          var ans = box.querySelector('.review-ans[data-i="' + i + '"]');
-          if (ans) ans.classList.remove("hidden");
-        };
-      });
-      box.querySelectorAll("[data-ok]").forEach(function (b) {
-        b.onclick = function () {
-          FunStore.reviewDone(due[parseInt(b.getAttribute("data-ok"), 10)].q);
-          renderHome();
-        };
-      });
-      box.querySelectorAll("[data-no]").forEach(function (b) {
-        b.onclick = function () {
-          FunStore.addReview(due[parseInt(b.getAttribute("data-no"), 10)]);
-          renderHome();
-        };
-      });
+      var go = el("rvGo");
+      if (go) go.onclick = function () { FunUI.go("review"); };
     }, 0);
-    return html;
-  }
-  function formatAnswer(a) {
-    if (typeof a === "boolean") return a ? "正确" : "错误";
-    if (Array.isArray(a)) return a.join("、");
-    return String(a);
+    return '<div id="reviewBox" class="home-review">' +
+      '<div class="section-title">📅 间隔复习 · 错题本</div>' +
+      '<div class="section-sub">答错的题目会自动收进错题本：集中查看正确答案，确认记牢后点「已掌握」清除，没记住的按遗忘曲线 2 天后再提醒。</div>' +
+      '<div class="hr-line">当前 <b>' + all.length + "</b> 道错题，其中 <b>" + due + "</b> 道今日待巩固。" +
+        '<button class="btn small" id="rvGo">进入间隔复习 →</button></div>' +
+      "</div>";
   }
 
   /* ---------- 启动 ---------- */
