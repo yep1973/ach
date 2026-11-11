@@ -78,7 +78,9 @@
         '<input id="nickInput" class="login-input" maxlength="12" placeholder="例如：小史官" />' +
         '<div id="nickErr" class="login-err"></div>' +
         '<button id="enterBtn" class="btn login-btn">进入乐园 ▶</button>' +
-        (hasPlayers ? '<div class="login-hint">已有玩家存档在本地，输入相同游戏账号可继续上次进度。</div>' : '') +
+        (hasPlayers
+          ? '<div class="login-hint">已有存档；同一游戏账号在手机 / 电脑上自动同步，输入账号即可继续上次进度。</div>'
+          : '<div class="login-hint">同一游戏账号在手机 / 电脑上进度自动同步。</div>') +
         '<button id="loginBackHome" class="btn ghost login-back-home">← 返回学习系统</button>' +
       "</div>";
     layer.classList.remove("hidden");
@@ -91,7 +93,17 @@
       if (!v.trim()) { el("nickErr").textContent = "请输入昵称"; return; }
       var r = FunStore.loginOrCreate(a, v);
       if (!r.ok) { el("nickErr").textContent = r.msg; return; }
-      onEntered(r);
+      // 关键：必须先等云端档案拉回来再渲染游戏界面。
+      // 否则手机扫码登录时会先显示一份刚新建的空白本地档，看起来就是「和电脑不同步」。
+      if (!(window.FunStore && FunStore.syncFromCloud)) { onEntered(r); return; }
+      var btn = el("enterBtn");
+      if (btn) { btn.disabled = true; btn.textContent = "正在同步云端进度…"; }
+      el("nickErr").textContent = "";
+      FunStore.syncFromCloud(a.trim(), function () {
+        if (btn) { btn.disabled = false; btn.textContent = "进入乐园 ▶"; }
+        FunStore.flush();
+        onEntered({ ok: true, created: r.created, profile: FunStore.get() });
+      }, true);
     }
     el("enterBtn").onclick = tryEnter;
     input.onkeydown = function (e) { if (e.key === "Enter") tryEnter(); };
@@ -469,7 +481,8 @@
       FunStore.logout();
     }
     if (FunStore.get()) {
-      // 已登录（刷新页面等情况）
+      // 已登录（刷新页面等情况）：后台拉取云端最新档案，避免刷新后看到另一台设备的旧进度
+      if (FunStore.syncPull) FunStore.syncPull(FunStore.get().account);
       FunStore.startClock();
       FunStore.tickDaily();
       if (!FunStore.get().completed) { startFooter(); FunStore.markPlaying(true); if (window.FunUI) { FunUI.go("home"); FunUI.renderAccount(); } }

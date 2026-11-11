@@ -10,12 +10,15 @@
   var KEY = "fun_campaign_v1";        // { current, players:{ nick:profile } }
   var SAVE_EVERY = 2;                 // 每 N 秒落盘一次（计时精度足够）
 
-  // —— 云端同步（Cloudflare Pages Functions /api，可选）——
-  // 默认同源 /api；可在部署时通过 window.FUN_API_BASE 覆盖为自定义域名。
+  // —— 云端同步（Netlify Functions /api + Netlify Blobs）——
+  // 按「游戏账号」把完整档案存到云端，手机 / 电脑登录同一账号读到同一份进度。
+  // 默认同源 /api；可通过 window.FUN_API_BASE 覆盖为自定义域名。
   // 云端不可用时自动降级 localStorage，游戏照常进行，不阻塞。
   var API = (window.FUN_API_BASE) || "/api";
-  var CLOUD_ON = true;                // 关闭云端：设为 false 即纯本地（兼容现有 CloudStudio 部署）
+  var CLOUD_ON = true;                // 关闭云端：设为 false 即纯本地
   var _lastSync = 0;                  // 云端节流时间戳
+  var _syncing = false;               // 登录拉取期间禁止推送，避免本地空档覆盖云端
+  var SYNC_TIMEOUT = 4000;            // 拉取超时（毫秒），超时后照常用本地档进入游戏
 
   // 徽章定义
   var BADGES = {
@@ -49,63 +52,154 @@
       return s;
     } catch (e) { return { current: null, players: {} }; }
   }
-  function saveAll() {
+  function saveLocal() {
     // 兜底：始终写 localStorage——保证离线/云端未就绪也能玩，并保持计时修复逻辑（_clock 不入库）
     try {
       var clone = {};
       for (var k in box) { if (k === "_clock" || k === "_saveAcc") continue; clone[k] = box[k]; }
       localStorage.setItem(KEY, JSON.stringify(clone));
     } catch (e) {}
-    syncPush(false);
+  }
+  function saveAll() { saveLocal(); syncPush(false); }
+  // 关键节点强制同步（退出 / 通关 / 重开）：不受 15 秒节流限制，keepalive 保证页面跳转后仍能送达
+  function flush() { saveLocal(); syncPush(true); }
+
+  // 上传的完整业务档案：不含 playing / lastTick / lastActive 等运行期状态
+  function cloudProfile(p) {
+    return {
+      account: p.account, nick: p.nick, createdAt: p.createdAt,
+      xp: p.xp, streak: p.streak, lastDay: p.lastDay,
+      badges: p.badges || {}, reviews: p.reviews || [],
+      theaterBest: p.theaterBest || {}, cards: p.cards || [],
+      modCards: p.modCards || {}, fragments: p.fragments,
+      fragShown: p.fragShown, introSeen: p.introSeen,
+      playedMs: p.playedMs, completed: p.completed, completedMs: p.completedMs
+    };
   }
 
   // 云端同步（best-effort，失败静默）：节流 + 关键事件强制
   function syncPush(force) {
-    if (!CLOUD_ON) return;
+    if (!CLOUD_ON || _syncing) return;
     var now = Date.now();
     if (!force && now - _lastSync < 15000) return;   // 每 15 秒至多推送一次，省额度
     var acc = box.current;
     if (!acc || !box.players[acc]) return;
     _lastSync = now;
-    var p = box.players[acc];
-    var payload = {
-      account: acc,
-      profile: {
-        nick: p.nick, playedMs: p.playedMs, completed: p.completed,
-        completedMs: p.completedMs, cards: p.cards
-      }
-    };
+    var payload = { account: acc, profile: cloudProfile(normalize(box.players[acc])) };
     try {
       fetch(API + "/progress", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        keepalive: true,
+        cache: "no-store"
       }).catch(function () {});
     } catch (e) {}
   }
 
-  // 登录时从云端拉取最新（跨设备续玩）：以较大/较小值合并，防止进度回退
-  function syncPull(account) {
-    if (!CLOUD_ON) return;
+  // 本地与云端卡牌并集（按 id+ts+source 去重），防止后台刷新时覆盖刚抽到的卡
+  function mergeCardArrays(a, b) {
+    var out = [], seen = {};
+    (a || []).concat(b || []).forEach(function (c) {
+      if (!c || typeof c !== "object") return;
+      var k = [c.id || "", c.ts || "", c.source || "", c.name || ""].join("|");
+      if (seen[k]) return;
+      seen[k] = 1; out.push(c);
+    });
+    return out.slice(0, 500);
+  }
+  function maxN(a, b) { return Math.max(Number(a) || 0, Number(b) || 0); }
+  function minMs2(a, b) {
+    if (a == null) return b;
+    if (b == null) return a;
+    return Math.min(a, b);
+  }
+
+  // 把云端档案应用到本地：
+  // strict=true（新设备登录）→ 完全以云端为准，仅保护累计时长；
+  // strict=false（后台刷新）  → 合并本地尚未上传的增量，避免覆盖刚获得的进度。
+  function applyRemote(account, remote, strict) {
+    var local = box.players[account] ? normalize(box.players[account]) : null;
+    var p = normalize(remote);
+    p.account = account;
+    if (!p.nick) p.nick = local ? local.nick : account;
+
+    if (local && strict) {
+      // 严格计时：取两端较大值，防止切设备丢时长或被较小值回退
+      p.playedMs = maxN(local.playedMs, p.playedMs);
+      p.playing = !!local.playing;
+    } else if (local) {
+      p.playedMs = maxN(local.playedMs, p.playedMs);
+      p.xp = maxN(local.xp, p.xp);
+      p.fragments = maxN(local.fragments, p.fragments);
+      p.fragShown = maxN(local.fragShown, p.fragShown);
+      p.introSeen = !!(local.introSeen || p.introSeen);
+      p.completed = !!(local.completed || p.completed);
+      p.completedMs = minMs2(local.completedMs, p.completedMs);
+      p.badges = Object.assign({}, p.badges || {}, local.badges || {});
+      p.theaterBest = Object.assign({}, p.theaterBest || {}, local.theaterBest || {});
+      p.reviews = ((local.reviews || []).length > (p.reviews || []).length) ? local.reviews : p.reviews;
+      p.cards = mergeCardArrays(p.cards, local.cards);
+      var lm = local.modCards || {}, rm = p.modCards || {};
+      p.modCards = {
+        quiz: maxN(lm.quiz, rm.quiz), drag: maxN(lm.drag, rm.drag), theater: maxN(lm.theater, rm.theater)
+      };
+      p.playing = !!local.playing;
+    }
+
+    p.lastTick = Date.now();      // 重置心跳戳：离线时长不计入
+    p.lastActive = Date.now();
+    box.players[account] = p;
+    saveLocal();                  // 只写本地，不回推，避免同步环
+    notifySynced();
+  }
+
+  function notifySynced() {
     try {
-      fetch(API + "/progress?account=" + encodeURIComponent(account))
+      if (window.FunUI) {
+        if (FunUI.refreshHUD) FunUI.refreshHUD();
+        if (FunUI.renderAccount) FunUI.renderAccount();
+      }
+      if (window.FunCampaign && FunCampaign.refreshFooter) FunCampaign.refreshFooter();
+    } catch (e) {}
+  }
+
+  // 登录时阻塞式拉取云端最新档案（跨设备续玩的关键）：
+  // 必须等云端返回后再渲染游戏界面，否则手机会先显示一份空白/陈旧的本地档。
+  // 云端不可用 / 超时则照常用本地档进入，不阻塞游戏。
+  function syncFromCloud(account, cb, strict) {
+    cb = cb || function () {};
+    if (!CLOUD_ON || !account) { cb(false); return; }
+    _syncing = true;
+    var done = false, timer = null;
+    function finish(ok) {
+      if (done) return;
+      done = true;
+      if (timer) clearTimeout(timer);
+      _syncing = false;
+      cb(ok);
+    }
+    timer = setTimeout(function () { finish(false); }, SYNC_TIMEOUT);
+    try {
+      fetch(API + "/progress?account=" + encodeURIComponent(account) + "&t=" + Date.now(), { cache: "no-store" })
         .then(function (r) { return r.json(); })
         .then(function (d) {
-          if (d && d.ok && d.profile) {
-            var remote = d.profile, local = box.players[account];
-            if (local) {
-              local.playedMs = Math.max(local.playedMs || 0, remote.playedMs || 0);
-              if (remote.completed) {
-                local.completed = true;
-                local.completedMs = (local.completedMs == null)
-                  ? remote.completedMs
-                  : Math.min(local.completedMs, remote.completedMs == null ? local.completedMs : remote.completedMs);
-              }
-              if (remote.nick) local.nick = remote.nick;
-              saveAll();
-            }
-          }
+          var ok = !!(d && d.ok && d.profile);
+          if (ok) applyRemote(account, d.profile, !!strict);
+          finish(ok);
         })
+        .catch(function () { finish(false); });
+    } catch (e) { finish(false); }
+  }
+
+  // 后台刷新（页面重新可见、刷新页面后自动登录时用）：合并式，不丢本地未上传增量
+  function syncPull(account) { syncFromCloud(account, function () {}, false); }
+
+  // 删除账号时同步删除云端档案，避免另一台设备又拉回旧存档
+  function syncDelete(account) {
+    if (!CLOUD_ON || !account) return;
+    try {
+      fetch(API + "/progress?account=" + encodeURIComponent(account), { method: "DELETE", keepalive: true })
         .catch(function () {});
     } catch (e) {}
   }
@@ -114,7 +208,7 @@
   function cloudRanking(cb) {
     if (!CLOUD_ON) { if (cb) cb(null); return; }
     try {
-      fetch(API + "/leaderboard")
+      fetch(API + "/leaderboard", { cache: "no-store" })
         .then(function (r) { return r.json(); })
         .then(function (d) { if (cb) cb((d && d.ok && Array.isArray(d.list)) ? d.list : null); })
         .catch(function () { if (cb) cb(null); });
@@ -354,14 +448,17 @@
     box.current = account;
     p.lastActive = Date.now();
     p.lastTick = Date.now();
-    saveAll();
-    syncPull(account);   // 后台拉取云端最新进度（跨设备续玩）
+    p.playing = false;
+    saveLocal();   // 登录时只写本地：须等 syncFromCloud 拉回云端档案后再推送，
+                   // 否则新设备上的空白档会把云端已有进度覆盖掉。
     return { ok: true, created: created, profile: p };
   }
   function logout() {
     if (box.current) { var p = box.players[box.current]; if (p) { p.playing = false; p.lastTick = Date.now(); } }
+    flush();          // 先强制上传（此刻仍有 current），否则退出前最后的计时会被 15s 节流吞掉
     box.current = null;
-    saveAll();
+    saveLocal();
+    _lastSync = 0;
   }
 
   // 暂时退出（点击“返回学习系统”用）：暂停游戏计时、清空当前活动会话，
@@ -369,8 +466,10 @@
   function tempExit() {
     var p = current();
     if (p) { p.playing = false; p.lastTick = Date.now(); p.lastActive = Date.now(); }
+    flush();          // 页面即将跳转，keepalive 保证这次同步仍能送达
     box.current = null;
-    saveAll();
+    saveLocal();
+    _lastSync = 0;
   }
   function exists(account) { return !!(box.players[(account || "").trim()]); }
 
@@ -389,7 +488,7 @@
     p.playing = false;
     p.completedMs = p.playedMs;
     award("conqueror");
-    saveAll();
+    flush();
   }
 
   // 重新开始挑战：清空进度但保留账号与昵称
@@ -400,7 +499,7 @@
     box.players[acc] = defaultProfile(acc, p.nick);
     box.players[acc].introSeen = true; // 重开不再弹目标
     box.current = acc;
-    saveAll();
+    flush();
   }
 
   // 彻底删除某个游戏账号的存档（含进度），若该账号为当前登录则一并退出登录
@@ -410,15 +509,17 @@
     var had = !!box.players[account];
     if (had) delete box.players[account];
     if (box.current === account) box.current = null;
-    saveAll();
+    if (had) syncDelete(account);   // 云端一并删除，避免另一台设备又拉回旧档
+    saveLocal();
     return had;
   }
 
   // 清空全部玩家存档（仅调试 / 重置环境用）
   function deleteAllProfiles() {
+    Object.keys(box.players).forEach(function (a) { syncDelete(a); });
     box.players = {};
     box.current = null;
-    saveAll();
+    saveLocal();
   }
 
   function markIntroSeen() { var p = current(); if (p) { p.introSeen = true; saveAll(); } }
@@ -474,6 +575,22 @@
     ranking: ranking,
     cloudRanking: cloudRanking,
     fmtTime: fmtTime,
-    save: saveAll
+    save: saveAll,
+    flush: flush,
+    syncFromCloud: syncFromCloud,
+    syncPull: syncPull
   };
+
+  // 切到后台 / 关闭页面前强制上传最新进度；回到页面时拉取另一端的最新档案。
+  // 配合登录时的阻塞式拉取，保证「同一账号 = 同一份数据」。
+  function installSyncHooks() {
+    try {
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden") { if (box.current) flush(); }
+        else if (box.current) { syncPull(box.current); }
+      });
+      window.addEventListener("pagehide", function () { if (box.current) flush(); });
+    } catch (e) {}
+  }
+  installSyncHooks();
 })();

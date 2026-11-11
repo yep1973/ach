@@ -1,0 +1,9 @@
+{
+  "name": "ancient-chinese-history",
+  "version": "1.0.0",
+  "private": true,
+  "description": "中国历史学习系统 · 静态站 + Netlify Functions 存档后端",
+  "dependencies": {
+    "@netlify/blobs": "^11.1.9"
+  }
+}

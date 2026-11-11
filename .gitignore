@@ -19,3 +19,6 @@ src_tmp/
 # 其他平台 / 后端（非本静态站所用）
 cloud/
 miniprogram/
+
+# Netlify Functions 依赖（由 package.json 在云端安装，本地不提交）
+node_modules/
