@@ -360,10 +360,16 @@ h1, h2, h3 { font-family: var(--kai); letter-spacing: .5px; }
 .match-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .match-col { display: flex; flex-direction: column; gap: 10px; }
 .match-item {
+  position: relative;
   background: #fff; border: 2px solid #f0e3d2; border-radius: 14px;
   padding: 12px 14px; cursor: pointer; font-size: 15px; text-align: center;
 }
 .match-item.pick { border-color: var(--blue); background: #eef6ff; }
+/* 提交前：只标记「已连成一对」，不提示对错 */
+.match-item.paired { border-color: var(--blue); background: #f0f6ff; }
+/* 提交后：一次性集中判分 */
+.match-item.right { border-color: var(--green); background: #eafbe4; }
+.match-item.wrong { border-color: var(--coral); background: #ffece6; }
 .match-item.done { opacity: .45; pointer-events: none; }
 .match-line { font-size: 12px; color: var(--ink-soft); text-align: center; }
 

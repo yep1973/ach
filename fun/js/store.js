@@ -74,6 +74,7 @@
       modCards: p.modCards || {}, fragments: p.fragments,
       fragShown: p.fragShown, introSeen: p.introSeen,
       clueUsed: p.clueUsed || [], clueStats: p.clueStats || {},
+      quizSeen: p.quizSeen || [],
       playedMs: p.playedMs, completed: p.completed, completedMs: p.completedMs
     };
   }
@@ -199,6 +200,8 @@
     }
 
     // 错题本：两端合并后剔除「已掌握」墓碑，保证清除动作跨设备生效
+    // 闯关答题「已出过的题目」两端取并集：手机 / 电脑同账号不会重复考同一考点
+    p.quizSeen = unionClues(local ? local.quizSeen : [], p.quizSeen);
     p.reviewRemoved = unionStrings(local ? local.reviewRemoved : [], p.reviewRemoved);
     var tombs = tombSet(p.reviewRemoved);
     p.reviews = (!local || strict)
@@ -293,6 +296,7 @@
       introSeen: false,             // 是否看过游戏目标
       clueUsed: [],                 // 线索推理：本轮已出过的提示 id（跨设备同步）
       clueStats: { asked: 0, solved: 0, firstTry: 0 }, // 出题 / 猜中 / 一击即中次数
+      quizSeen: [],                 // 闯关答题：本轮已出过的题目 qid（跨设备同步，防止考点重复）
       playedMs: 0,                  // 累计游戏时长
       lastTick: 0,                  // 计时心跳戳
       playing: false,               // 是否处于“游戏中”（在玩法界面则计Tick）
@@ -325,6 +329,7 @@
     });
     if (!Array.isArray(p.cards)) p.cards = [];
     if (!Array.isArray(p.clueUsed)) p.clueUsed = [];
+    if (!Array.isArray(p.quizSeen)) p.quizSeen = [];
     if (!p.clueStats || typeof p.clueStats !== "object") p.clueStats = { asked: 0, solved: 0, firstTry: 0 };
     ["asked", "solved", "firstTry"].forEach(function (k) {
       if (typeof p.clueStats[k] !== "number" || p.clueStats[k] < 0) p.clueStats[k] = 0;

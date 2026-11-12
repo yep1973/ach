@@ -106,7 +106,7 @@ function mergeGrades(a, b) {
   return out;
 }
 
-// 线索推理：已出过的提示 id 取并集（每台设备出题后就上传，避免重复）
+// 已用过的 id 取并集（线索提示 / 闯关已出题，每台设备出题后就上传，避免重复）
 function mergeClueUsed(a, b) {
   const out = [], seen = {};
   arr(a).concat(arr(b)).forEach(function (x) {
@@ -148,6 +148,7 @@ function sanitize(account, raw) {
     introSeen: !!src.introSeen,
     clueUsed: mergeClueUsed(src.clueUsed, []),
     clueStats: mergeClueStats(src.clueStats, {}),
+    quizSeen: mergeClueUsed(src.quizSeen, []),
     playedMs: num(src.playedMs),
     completed: !!src.completed,
     completedMs: src.completedMs == null ? null : num(src.completedMs),
@@ -181,6 +182,7 @@ function merge(old, inc) {
   out.cards = mergeCards(old.cards, inc.cards);
   out.clueUsed = mergeClueUsed(old.clueUsed, inc.clueUsed);
   out.clueStats = mergeClueStats(old.clueStats, inc.clueStats);
+  out.quizSeen = mergeClueUsed(old.quizSeen, inc.quizSeen);
 
   const om = obj(old.modCards), im = obj(inc.modCards);
   out.modCards = {

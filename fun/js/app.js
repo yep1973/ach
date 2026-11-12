@@ -86,7 +86,7 @@
       '<div class="module-card mc-1" data-action="quiz">' +
         '<div class="mc-ico">⚔️</div><h3>闯关答题</h3>' +
         '<span class="mc-tag">积分 · 连击 · Boss</span>' +
-        '<p>系统从全部朝代随机抽题，生命值、连击加分、限时挑战，通关赢经验、徽章和人物卡牌。</p></div>' +
+        '<p>全朝代随机抽题、同考点不重复；每题不限时（全站统一计时），连线题提交后集中判分。生命值、连击加分、Boss 关，赢经验、徽章和人物卡牌。</p></div>' +
       '<div class="module-card mc-6" data-action="clue">' +
         '<div class="mc-ico">🕵️</div><h3>线索推理</h3>' +
         '<span class="mc-tag">猜人物 · 三条线索</span>' +
